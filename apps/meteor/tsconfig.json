@@ -29,6 +29,8 @@
 			"swiper/swiper-react.mjs": ["./node_modules/swiper/swiper-react.d.ts"],
 		},
 		"preserveSymlinks": true,
+		"allowImportingTsExtensions": true,
+		"types": []
 
 		// "sourceMap": true,
 		// "declaration": true,
