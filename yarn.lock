@@ -10092,7 +10092,7 @@ __metadata:
     ua-parser-js: "npm:~1.0.41"
     underscore: "npm:^1.13.8"
     universal-perf-hooks: "npm:^1.0.1"
-    vite: "npm:8.0.0-beta.9"
+    vite: "npm:8.0.0-beta.10"
     webdav: "npm:^4.11.5"
     webpack: "npm:~5.104.1"
     xml-crypto: "npm:~3.2.1"
@@ -37035,9 +37035,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:8.0.0-beta.9":
-  version: 8.0.0-beta.9
-  resolution: "vite@npm:8.0.0-beta.9"
+"vite@npm:8.0.0-beta.10":
+  version: 8.0.0-beta.10
+  resolution: "vite@npm:8.0.0-beta.10"
   dependencies:
     "@oxc-project/runtime": "npm:0.110.0"
     fdir: "npm:^6.5.0"
@@ -37087,7 +37087,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 10/ab324f87de17a04a53331d20cf9e18b07d6713dea26aa26579859a88a230e042f4061177c0dc8dbfc28e51520821b419878d339b0162742359b46e894be7183a
+  checksum: 10/077698509ad8e9b0bddb123411ee2cdc001e07cacf8602ef2536a409b8f453762127d8cab4d990b39ac224ee235cb5c603d98faf902a7eb5bd8ede8a4b6e184d
   languageName: node
   linkType: hard
 
