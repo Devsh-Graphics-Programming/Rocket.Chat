@@ -2,9 +2,7 @@
 	"extends": "@rocket.chat/tsconfig/base.json",
 	"compilerOptions": {
 		"target": "es2018",
-		"module": "esnext",
-		"moduleResolution": "bundler",
-		"moduleDetection": "force",
+		"module": "esNext",
 		"lib": ["esnext", "dom"],
 
 		"allowJs": true,
@@ -29,8 +27,6 @@
 			"swiper/swiper-react.mjs": ["./node_modules/swiper/swiper-react.d.ts"],
 		},
 		"preserveSymlinks": true,
-		"allowImportingTsExtensions": true,
-		"types": []
 
 		// "sourceMap": true,
 		// "declaration": true,
