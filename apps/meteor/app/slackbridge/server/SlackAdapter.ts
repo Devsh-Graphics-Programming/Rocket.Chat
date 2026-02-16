@@ -29,8 +29,6 @@ import { executeSetReaction } from '../../reactions/server/setReaction';
 import { settings } from '../../settings/server';
 import { getUserAvatarURL } from '../../utils/server/getUserAvatarURL';
 
-const { App: SlackApp } = slackBolt;
-
 export default class SlackAdapter {
 	constructor(slackBridge) {
 		slackLogger.debug({ msg: 'constructor' });

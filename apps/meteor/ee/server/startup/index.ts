@@ -18,6 +18,6 @@ export const registerEEBroker = async (): Promise<void> => {
 		api.setBroker(startBroker());
 		await api.start();
 	} else {
-		await import('./presence');
+		require('./presence');
 	}
 };
