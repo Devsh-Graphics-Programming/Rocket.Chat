@@ -169,7 +169,7 @@ export class HomeChannel {
 	}
 
 	getEmojiByName(name: string) {
-		return this.dialogEmojiPicker.locator(`role=tabpanel >> role=button[name="${name}"]`);
+		return this.dialogEmojiPicker.locator(`role=tabpanel >> [data-emoji="${name}"]`);
 	}
 
 	async pickEmoji(emoji: string, section = 'Smileys & People') {
