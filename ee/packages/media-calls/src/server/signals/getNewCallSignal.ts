@@ -7,14 +7,14 @@ function getCallFlags(call: IMediaCall, role: CallRole): CallFlag[] {
 	const flags: CallFlag[] = [];
 
 	const isInternal = call.caller.type === 'user' && call.callee.type === 'user';
-	const shouldCreateDataChannel = isInternal && role === 'caller';
+	const shouldCreateDataChannel = role === 'caller';
 
 	if (isInternal) {
 		flags.push('internal');
+	}
 
-		if (shouldCreateDataChannel) {
-			flags.push('create-data-channel');
-		}
+	if (shouldCreateDataChannel) {
+		flags.push('create-data-channel');
 	}
 
 	return flags;
