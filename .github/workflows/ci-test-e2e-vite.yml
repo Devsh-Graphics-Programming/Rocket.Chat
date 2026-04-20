@@ -49,6 +49,8 @@ on:
         required: true
       CR_PAT:
         required: true
+      NPM_TOKEN:
+        required: false
       QASE_API_TOKEN:
         required: false
       REPORTER_ROCKETCHAT_URL:
@@ -161,7 +163,7 @@ jobs:
           METEOR_TOOL_DIRECTORY=$(dirname "$METEOR_SYMLINK_TARGET")
           set -e
           LAUNCHER=$HOME/.meteor/$METEOR_TOOL_DIRECTORY/scripts/admin/launch-meteor
-          if [ -e $LAUNCHER ]
+          if [ -e "$LAUNCHER" ]
           then
             echo "Cached Meteor bin found, restoring it"
             sudo cp "$LAUNCHER" "/usr/local/bin/meteor"
@@ -205,7 +207,7 @@ jobs:
 
       - name: Set DEBUG_LOG_LEVEL (debug enabled)
         if: runner.debug == '1'
-        run: echo "DEBUG_LOG_LEVEL=2" >> $GITHUB_ENV
+        run: echo "DEBUG_LOG_LEVEL=2" >> "$GITHUB_ENV"
 
       - name: Start httpbin container and wait for it to be ready
         if: inputs.type == 'api'
@@ -216,8 +218,8 @@ jobs:
         run: |
           set -o xtrace
 
-          mkdir -p $COVERAGE_DIR
-          chmod 777 $COVERAGE_DIR
+          mkdir -p "$COVERAGE_DIR"
+          chmod 777 "$COVERAGE_DIR"
 
       - name: Start containers for CE
         if: inputs.release == 'ce'
@@ -256,7 +258,7 @@ jobs:
               echo "Frontend is accessible!"
               break
             fi
-            if [ $i -eq 30 ]; then
+            if [ "$i" -eq 30 ]; then
               echo "Frontend not accessible after 30 attempts"
               echo "=== Traefik logs ==="
               docker compose -f docker-compose-ci-vite.yml logs traefik
@@ -277,7 +279,7 @@ jobs:
         run: |
           docker ps
 
-          until echo "$(docker compose -f docker-compose-ci-vite.yml logs ddp-streamer-service)" | grep -q "NetworkBroker started successfully"; do
+          until docker compose -f docker-compose-ci-vite.yml logs ddp-streamer-service | grep -q "NetworkBroker started successfully"; do
             echo "Waiting 'ddp-streamer' to start up"
             ((c++)) && ((c==10)) && docker compose -f docker-compose-ci-vite.yml logs ddp-streamer-service && exit 1
             sleep 10
@@ -296,11 +298,12 @@ jobs:
           set -o xtrace
 
           npm run testapi
+          s=$?
 
           docker compose -f ../../docker-compose-ci-vite.yml stop
 
-          ls -la $COVERAGE_DIR
-          exit $s
+          ls -la "$COVERAGE_DIR"
+          exit "$s"
 
       - name: E2E Test UI (${{ matrix.shard }}/${{ inputs.total-shard }})
         if: inputs.type == 'ui'
@@ -333,8 +336,8 @@ jobs:
         if: inputs.type == 'ui' && inputs.coverage == matrix.mongodb-version && always()
         working-directory: ./apps/meteor
         run: |
-          npx nyc merge .nyc_output ${COVERAGE_DIR}/${COVERAGE_FILE_NAME}
-          ls -la $COVERAGE_DIR || true
+          npx nyc merge .nyc_output "${COVERAGE_DIR}/${COVERAGE_FILE_NAME}"
+          ls -la "$COVERAGE_DIR" || true
 
       - name: Store playwright test trace
         if: inputs.type == 'ui' && always()
