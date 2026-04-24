@@ -6,7 +6,7 @@ import { useAutoLinkDomains } from './useAutoLinkDomains';
 import { useMessageListAutoTranslate } from '../../../../components/message/list/MessageListContext';
 import { parseMessageTextToAstMarkdown } from '../../../../lib/parseMessageTextToAstMarkdown';
 
-export const useMessageBody = (message: IMessage | undefined): string | Root => {
+export const useMessageBody = (message: IMessage | undefined, maxMessageParseSize: number): string | Root => {
 	const autoTranslateOptions = useMessageListAutoTranslate();
 	const customDomains = useAutoLinkDomains();
 
@@ -20,8 +20,7 @@ export const useMessageBody = (message: IMessage | undefined): string | Root => 
 				customDomains,
 				emoticons: true,
 			};
-
-			const messageWithMd = parseMessageTextToAstMarkdown(message, parseOptions, autoTranslateOptions);
+			const messageWithMd = parseMessageTextToAstMarkdown(message, parseOptions, autoTranslateOptions, maxMessageParseSize);
 
 			return messageWithMd.md;
 		}
@@ -39,5 +38,5 @@ export const useMessageBody = (message: IMessage | undefined): string | Root => 
 		}
 
 		return '';
-	}, [message, customDomains, autoTranslateOptions]);
+	}, [message, customDomains, autoTranslateOptions, maxMessageParseSize]);
 };

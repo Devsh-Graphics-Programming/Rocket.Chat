@@ -31,6 +31,7 @@ import { useGoToThread } from '../../../views/room/hooks/useGoToThread';
 import Emoji from '../../Emoji';
 import { useShowTranslated } from '../list/MessageListContext';
 import ThreadMessagePreviewBody from './threadPreview/ThreadMessagePreviewBody';
+import { useMaxMessageParseSize } from '../hooks/useMaxMessageParseSize';
 
 type ThreadMessagePreviewProps = {
 	message: IThreadMessage;
@@ -51,7 +52,9 @@ const ThreadMessagePreview = ({ message, showUserAvatar, sequential, ...props }:
 	useCountSelected();
 
 	const messageType = parentMessage.isSuccess ? MessageTypes.getType(parentMessage.data) : null;
-	const messageBody = useMessageBody(parentMessage.data);
+
+	const maxMessageParseSize = useMaxMessageParseSize();
+	const messageBody = useMessageBody(parentMessage.data, maxMessageParseSize);
 
 	const previewMessage = isParsedMessage(messageBody) ? { md: messageBody } : { msg: messageBody };
 

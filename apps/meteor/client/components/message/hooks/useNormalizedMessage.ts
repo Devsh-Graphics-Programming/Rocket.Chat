@@ -57,7 +57,7 @@ const normalizeAttachments = (attachments: MessageAttachment[], name?: string, t
 	});
 };
 
-export const useNormalizedMessage = <TMessage extends IMessage>(message: TMessage): MessageWithMdEnforced => {
+export const useNormalizedMessage = <TMessage extends IMessage>(message: TMessage, maxMessageParseSize: number): MessageWithMdEnforced => {
 	const katex = useMessageListKatex();
 	const katexEnabled = !!katex;
 	const customDomains = useAutoLinkDomains();
@@ -77,7 +77,7 @@ export const useNormalizedMessage = <TMessage extends IMessage>(message: TMessag
 			}),
 		};
 
-		const normalizedMessage = parseMessageTextToAstMarkdown(message, parseOptions, autoTranslateOptions);
+		const normalizedMessage = parseMessageTextToAstMarkdown(message, parseOptions, autoTranslateOptions, maxMessageParseSize);
 
 		if (normalizedMessage.attachments) {
 			normalizedMessage.attachments = normalizeAttachments(
@@ -88,5 +88,14 @@ export const useNormalizedMessage = <TMessage extends IMessage>(message: TMessag
 		}
 
 		return normalizedMessage;
-	}, [showColors, customDomains, katexEnabled, katex?.dollarSyntaxEnabled, katex?.parenthesisSyntaxEnabled, message, autoTranslateOptions]);
+	}, [
+		showColors,
+		customDomains,
+		katexEnabled,
+		katex?.dollarSyntaxEnabled,
+		katex?.parenthesisSyntaxEnabled,
+		message,
+		autoTranslateOptions,
+		maxMessageParseSize,
+	]);
 };

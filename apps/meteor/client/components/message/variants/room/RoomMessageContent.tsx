@@ -18,6 +18,7 @@ import MessageActions from '../../content/MessageActions';
 import Reactions from '../../content/Reactions';
 import ThreadMetrics from '../../content/ThreadMetrics';
 import UrlPreviews from '../../content/UrlPreviews';
+import { useMaxMessageParseSize } from '../../hooks/useMaxMessageParseSize';
 import { useNormalizedMessage } from '../../hooks/useNormalizedMessage';
 import { useOembedLayout } from '../../hooks/useOembedLayout';
 import { useSubscriptionFromMessageQuery } from '../../hooks/useSubscriptionFromMessageQuery';
@@ -42,8 +43,9 @@ const RoomMessageContent = ({ message, unread, all, mention, searchText }: RoomM
 	const messageUser = { ...message.u, roles: [], ...useUserPresence(message.u._id) };
 	const chat = useChat();
 	const { t } = useTranslation();
+	const maxMessageParseSize = useMaxMessageParseSize();
 
-	const normalizedMessage = useNormalizedMessage(message);
+	const normalizedMessage = useNormalizedMessage(message, maxMessageParseSize);
 	const isMessageEncrypted = encrypted && normalizedMessage?.e2e === 'pending';
 
 	const quotes = normalizedMessage?.attachments?.filter(isQuoteAttachment) || [];
