@@ -28,7 +28,6 @@ export const parseMessageTextToAstMarkdown = <
 	message: TMessage,
 	parseOptions: Options,
 	autoTranslateOptions: AutoTranslateOptions,
-	maxMessageParseSize: number,
 ): MessageWithMdEnforced => {
 	const msg = removePossibleNullMessageValues(message);
 	const { showAutoTranslate, autoTranslateLanguage } = autoTranslateOptions;
@@ -36,14 +35,12 @@ export const parseMessageTextToAstMarkdown = <
 	const translated = showAutoTranslate(message);
 
 	const text = (translated && translations && translations[autoTranslateLanguage]) || msg.msg;
+
 	return {
 		...msg,
-		md:
-			isE2EEMessage(message) || translated
-				? textToMessageToken(text, parseOptions, maxMessageParseSize)
-				: (msg.md ?? textToMessageToken(text, parseOptions, maxMessageParseSize)),
+		md: isE2EEMessage(message) || translated ? textToMessageToken(text, parseOptions) : (msg.md ?? textToMessageToken(text, parseOptions)),
 		...(msg.attachments && {
-			attachments: parseMessageAttachments(msg.attachments, parseOptions, { autoTranslateLanguage, translated }, maxMessageParseSize),
+			attachments: parseMessageAttachments(msg.attachments, parseOptions, { autoTranslateLanguage, translated }),
 		}),
 	};
 };
@@ -52,7 +49,6 @@ export const parseMessageAttachment = <T extends MessageAttachment>(
 	attachment: T,
 	parseOptions: Options,
 	autoTranslateOptions: { autoTranslateLanguage?: string; translated: boolean },
-	maxMessageParseSize: number,
 ): T => {
 	const { translated, autoTranslateLanguage } = autoTranslateOptions;
 	if (!attachment.text) {
@@ -60,7 +56,7 @@ export const parseMessageAttachment = <T extends MessageAttachment>(
 	}
 
 	if (isQuoteAttachment(attachment) && attachment.attachments) {
-		attachment.attachments = parseMessageAttachments(attachment.attachments, parseOptions, autoTranslateOptions, maxMessageParseSize);
+		attachment.attachments = parseMessageAttachments(attachment.attachments, parseOptions, autoTranslateOptions);
 	}
 
 	const text =
@@ -70,9 +66,7 @@ export const parseMessageAttachment = <T extends MessageAttachment>(
 
 	return {
 		...attachment,
-		md: translated
-			? textToMessageToken(text, parseOptions, maxMessageParseSize)
-			: (attachment.md ?? textToMessageToken(text, parseOptions, maxMessageParseSize)),
+		md: translated ? textToMessageToken(text, parseOptions) : (attachment.md ?? textToMessageToken(text, parseOptions)),
 	};
 };
 
@@ -80,8 +74,7 @@ export const parseMessageAttachments = <T extends MessageAttachment>(
 	attachments: T[],
 	parseOptions: Options,
 	autoTranslateOptions: { autoTranslateLanguage?: string; translated: boolean },
-	maxMessageParseSize: number,
-): T[] => attachments.map((attachment) => parseMessageAttachment(attachment, parseOptions, autoTranslateOptions, maxMessageParseSize));
+): T[] => attachments.map((attachment) => parseMessageAttachment(attachment, parseOptions, autoTranslateOptions));
 
 const isNotNullOrUndefined = (value: unknown): boolean => value !== null && value !== undefined;
 
@@ -112,7 +105,7 @@ export const removePossibleNullMessageValues = <TMessage extends IMessage = IMes
 	...(isNotNullOrUndefined(reactions) && { reactions }),
 });
 
-const textToMessageToken = (textOrRoot: string | Root, parseOptions: Options, maxMessageParseSize: number): Root => {
+const textToMessageToken = (textOrRoot: string | Root, parseOptions: Options): Root => {
 	if (!textOrRoot) {
 		return [];
 	}
@@ -120,22 +113,9 @@ const textToMessageToken = (textOrRoot: string | Root, parseOptions: Options, ma
 	if (isParsedMessage(textOrRoot)) {
 		return textOrRoot;
 	}
-	if (textOrRoot.length > maxMessageParseSize) {
-		return [
-			{
-				type: 'PARAGRAPH',
-				value: [
-					{
-						type: 'PLAIN_TEXT',
-						value: textOrRoot,
-					},
-				],
-			},
-		];
-	}
-	const result = parse(textOrRoot, parseOptions);
+	const parsedMessage = parse(textOrRoot, parseOptions);
 
-	const parsedMessageCleaned = result[0].type !== 'LINE_BREAK' ? result : (result.slice(1) as Root);
+	const parsedMessageCleaned = parsedMessage[0].type !== 'LINE_BREAK' ? parsedMessage : (parsedMessage.slice(1) as Root);
 
 	return parsedMessageCleaned;
 };

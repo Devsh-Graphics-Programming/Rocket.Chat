@@ -15,12 +15,17 @@ export const useMessageBody = (message: IMessage | undefined, maxMessageParseSiz
 			return '';
 		}
 
+		if (message.msg && message.msg.length > maxMessageParseSize) {
+			return message.msg;
+		}
+
 		if (message.md) {
 			const parseOptions: Options = {
 				customDomains,
 				emoticons: true,
 			};
-			const messageWithMd = parseMessageTextToAstMarkdown(message, parseOptions, autoTranslateOptions, maxMessageParseSize);
+
+			const messageWithMd = parseMessageTextToAstMarkdown(message, parseOptions, autoTranslateOptions);
 
 			return messageWithMd.md;
 		}

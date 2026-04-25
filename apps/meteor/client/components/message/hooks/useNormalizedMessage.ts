@@ -77,7 +77,20 @@ export const useNormalizedMessage = <TMessage extends IMessage>(message: TMessag
 			}),
 		};
 
-		const normalizedMessage = parseMessageTextToAstMarkdown(message, parseOptions, autoTranslateOptions, maxMessageParseSize);
+		if (message.msg && message.msg.length > maxMessageParseSize) {
+			return {
+				...message,
+				md: [
+					{
+						type: 'PARAGRAPH',
+						value: [{ type: 'PLAIN_TEXT', value: message.msg }],
+					},
+				],
+				attachments: message.attachments,
+			};
+		}
+
+		const normalizedMessage = parseMessageTextToAstMarkdown(message, parseOptions, autoTranslateOptions);
 
 		if (normalizedMessage.attachments) {
 			normalizedMessage.attachments = normalizeAttachments(
