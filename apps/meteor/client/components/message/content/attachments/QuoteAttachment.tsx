@@ -73,7 +73,7 @@ export const QuoteAttachment = ({ attachment }: QuoteAttachmentProps): ReactElem
 							<Attachments attachments={attachment.attachments} id={attachment.attachments[0]?.title_link} />
 						</AttachmentInner>
 					)}
-					{attachment.text?.length <= maxMessageParseSize && attachment.md ? (
+					{attachment.text.length <= maxMessageParseSize && attachment.md ? (
 						<MessageContentBody md={attachment.md} />
 					) : (
 						attachment.text.substring(attachment.text.indexOf('\n') + 1)
