@@ -12,7 +12,7 @@ export const useMaxMessageParseSize = (): number => {
 	const settingValue = useSetting('Message_MaxAllowedSize', 5000);
 
 	return useMemo(() => {
-		const maxSize = typeof settingValue === 'number' ? settingValue : 5000;
+		const maxSize = typeof settingValue === 'number' && settingValue > 0 ? settingValue : 5000;
 		return Math.min(maxSize, MESSAGE_PARSE_HARD_LIMIT);
 	}, [settingValue]);
 };
