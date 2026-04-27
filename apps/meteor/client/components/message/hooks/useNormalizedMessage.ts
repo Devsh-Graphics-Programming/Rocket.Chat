@@ -86,7 +86,9 @@ export const useNormalizedMessage = <TMessage extends IMessage>(message: TMessag
 						value: [{ type: 'PLAIN_TEXT', value: message.msg }],
 					},
 				],
-				attachments: message.attachments,
+				attachments: message.attachments
+					? normalizeAttachments(message.attachments, message.file?.name, message.file?.type)
+					: message.attachments,
 			};
 		}
 
