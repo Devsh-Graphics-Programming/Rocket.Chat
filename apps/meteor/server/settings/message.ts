@@ -168,6 +168,7 @@ export const createMessageSettings = () =>
 		await this.add('Message_MaxAllowedSize', 5000, {
 			type: 'int',
 			public: true,
+			i18nDescription: 'Message_MaxAllowedSize_Description',
 		});
 		await this.add('Message_AllowConvertLongMessagesToAttachment', true, {
 			type: 'boolean',

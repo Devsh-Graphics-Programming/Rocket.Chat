@@ -3517,6 +3517,7 @@
   "Message_KeepHistory": "Keep Per Message Editing History",
   "Message_MaxAll": "Maximum Channel Size for ALL Message",
   "Message_MaxAllowedSize": "Maximum Allowed Characters Per Message",
+  "Message_MaxAllowedSize_Description": "Maximum number of characters allowed per message. Messages exceeding this limit will be displayed as plain text without markdown parsing.",
   "Message_not_sent_try_again": "Message not sent. \nPlease try again",
   "Message_QuoteChainLimit": "Maximum Number of Chained Quotes",
   "Message_Read_Receipt_Enabled": "Show Read Receipts",
