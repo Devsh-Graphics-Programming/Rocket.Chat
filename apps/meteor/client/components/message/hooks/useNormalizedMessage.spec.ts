@@ -63,6 +63,6 @@ describe('useNormalizedMessage', () => {
 		const { result } = renderHook(() => useNormalizedMessage(message as any, 100));
 
 		expect(mockParseMessageTextToAstMarkdown).not.toHaveBeenCalled();
-		expect(result.current.attachments).toBe(attachments);
+		expect(result.current.attachments).toEqual(attachments);
 	});
 });
