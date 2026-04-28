@@ -17,9 +17,18 @@ export const getURL = function (
 	const cdnPrefix = settings.watch('CDN_PREFIX') || '';
 	const siteUrl = settings.watch('Site_Url') || '';
 
+	const isLocalhost =
+		typeof window !== 'undefined' &&
+		(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+	const runtimeRootUrl =
+		typeof __meteor_runtime_config__ !== 'undefined' ? __meteor_runtime_config__.ROOT_URL || window.location.origin : '';
+
+	const resolvedSiteUrl = params.full && isLocalhost ? runtimeRootUrl : siteUrl;
+
 	if (cacheKey) {
 		path += `${path.includes('?') ? '&' : '?'}cacheKey=${Info.version}`;
 	}
 
-	return getURLWithoutSettings(path, params, cdnPrefix, siteUrl, cloudDeepLinkUrl);
+	return getURLWithoutSettings(path, params, cdnPrefix, resolvedSiteUrl, cloudDeepLinkUrl);
 };
