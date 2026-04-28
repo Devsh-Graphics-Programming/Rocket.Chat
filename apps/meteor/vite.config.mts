@@ -122,6 +122,7 @@ export default defineConfig(async () => {
 				'typia': path.resolve('./src/typia'),
 				// Third-party packages
 				'react-aria': path.resolve('./node_modules/react-aria'),
+				'swiper': path.resolve('./node_modules/swiper'),
 				// Rocket.Chat Packages
 				'@rocket.chat/api-client': path.resolve('../../packages/api-client/src/index.ts'),
 				'@rocket.chat/apps-engine': path.resolve('../../packages/apps-engine/src'),
