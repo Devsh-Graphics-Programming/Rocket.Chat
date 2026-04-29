@@ -40,5 +40,6 @@ describe('QuoteAttachment', () => {
 		render(<QuoteAttachment attachment={attachment as any} />);
 
 		expect(screen.queryByTestId('message-content-body')).not.toBeInTheDocument();
+		expect(screen.getByText(longText)).toBeInTheDocument();
 	});
 });
