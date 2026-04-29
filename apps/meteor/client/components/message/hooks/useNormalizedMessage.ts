@@ -87,7 +87,11 @@ export const useNormalizedMessage = <TMessage extends IMessage>(message: TMessag
 					},
 				],
 				attachments: message.attachments
-					? normalizeAttachments(message.attachments, message.file?.name, message.file?.type)
+					? normalizeAttachments(
+							message.attachments.map((a) => ({ ...a })),
+							message.file?.name,
+							message.file?.type,
+						)
 					: message.attachments,
 			};
 		}
