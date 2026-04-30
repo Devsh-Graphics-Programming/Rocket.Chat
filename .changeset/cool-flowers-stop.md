@@ -3,4 +3,4 @@
 '@rocket.chat/meteor': minor
 ---
 
-Adds `Message_MaxMarkdownParseLength` setting to limit the number of characters processed by the message parser.
+Adds `Message_MaxMarkdownParseLength` setting to limit the number of characters processed by the Markdown parser.
