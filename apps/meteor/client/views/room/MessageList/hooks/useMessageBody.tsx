@@ -6,7 +6,7 @@ import { useAutoLinkDomains } from './useAutoLinkDomains';
 import { useMessageListAutoTranslate } from '../../../../components/message/list/MessageListContext';
 import { parseMessageTextToAstMarkdown } from '../../../../lib/parseMessageTextToAstMarkdown';
 
-export const useMessageBody = (message: IMessage | undefined, maxMessageParseSize: number): string | Root => {
+export const useMessageBody = (message: IMessage | undefined, maxMarkdownParseLength: number): string | Root => {
 	const autoTranslateOptions = useMessageListAutoTranslate();
 	const customDomains = useAutoLinkDomains();
 
@@ -15,7 +15,7 @@ export const useMessageBody = (message: IMessage | undefined, maxMessageParseSiz
 			return '';
 		}
 
-		if (message.msg && message.msg.length > maxMessageParseSize) {
+		if (message.msg && message.msg.length > maxMarkdownParseLength) {
 			return message.msg;
 		}
 
@@ -43,5 +43,5 @@ export const useMessageBody = (message: IMessage | undefined, maxMessageParseSiz
 		}
 
 		return '';
-	}, [message, customDomains, autoTranslateOptions, maxMessageParseSize]);
+	}, [message, customDomains, autoTranslateOptions, maxMarkdownParseLength]);
 };

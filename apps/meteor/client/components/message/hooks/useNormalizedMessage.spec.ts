@@ -32,7 +32,7 @@ describe('useNormalizedMessage', () => {
 		mockParseMessageTextToAstMarkdown.mockClear();
 	});
 
-	it('should skip parsing and returns PARAGRAPH node when msg exceeds maxMessageParseSize', () => {
+	it('should skip parsing and returns PARAGRAPH node when msg exceeds maxMarkdownParseLength', () => {
 		const longMsg = 'a'.repeat(101);
 		const message = { ...baseMessage, msg: longMsg };
 
@@ -47,7 +47,7 @@ describe('useNormalizedMessage', () => {
 		]);
 	});
 
-	it('should call parseMessageTextToAstMarkdown when msg is within maxMessageParseSize', () => {
+	it('should call parseMessageTextToAstMarkdown when msg is within maxMarkdownParseLength', () => {
 		const message = { ...baseMessage, msg: 'Hello world' };
 
 		renderHook(() => useNormalizedMessage(message as any, 100));

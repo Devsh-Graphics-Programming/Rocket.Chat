@@ -13,7 +13,7 @@ import AttachmentAuthorName from './structure/AttachmentAuthorName';
 import AttachmentContent from './structure/AttachmentContent';
 import AttachmentDetails from './structure/AttachmentDetails';
 import AttachmentInner from './structure/AttachmentInner';
-import { useMaxMessageParseSize } from '../../hooks/useMaxMessageParseSize';
+import { useMaxMarkdownParseLength } from '../../hooks/useMaxMarkdownParseLength';
 
 // TODO: remove this team collaboration
 const quoteStyles = css`
@@ -39,7 +39,7 @@ type QuoteAttachmentProps = {
 export const QuoteAttachment = ({ attachment }: QuoteAttachmentProps): ReactElement => {
 	const formatTime = useTimeAgo();
 	const displayAvatarPreference = useUserPreference<boolean>('displayAvatars');
-	const maxMessageParseSize = useMaxMessageParseSize();
+	const maxMarkdownParseLength = useMaxMarkdownParseLength();
 
 	return (
 		<>
@@ -73,11 +73,7 @@ export const QuoteAttachment = ({ attachment }: QuoteAttachmentProps): ReactElem
 							<Attachments attachments={attachment.attachments} id={attachment.attachments[0]?.title_link} />
 						</AttachmentInner>
 					)}
-					{attachment.text.length <= maxMessageParseSize && attachment.md ? (
-						<MessageContentBody md={attachment.md} />
-					) : (
-						attachment.text.substring(attachment.text.indexOf('\n') + 1)
-					)}
+					{attachment.text.length <= maxMarkdownParseLength && attachment.md ? <MessageContentBody md={attachment.md} /> : attachment.text}
 				</AttachmentDetails>
 			</AttachmentContent>
 		</>

@@ -15,7 +15,7 @@ import Location from '../../content/Location';
 import MessageActions from '../../content/MessageActions';
 import Reactions from '../../content/Reactions';
 import UrlPreviews from '../../content/UrlPreviews';
-import { useMaxMessageParseSize } from '../../hooks/useMaxMessageParseSize';
+import { useMaxMarkdownParseLength } from '../../hooks/useMaxMarkdownParseLength';
 import { useNormalizedMessage } from '../../hooks/useNormalizedMessage';
 import { useOembedLayout } from '../../hooks/useOembedLayout';
 import { useSubscriptionFromMessageQuery } from '../../hooks/useSubscriptionFromMessageQuery';
@@ -34,11 +34,11 @@ const ThreadMessageContent = ({ message }: ThreadMessageContentProps): ReactElem
 	const uid = useUserId();
 	const { enabled: readReceiptEnabled } = useMessageListReadReceipts();
 	const messageUser = { ...message.u, roles: [], ...useUserPresence(message.u._id) };
-	const maxMessageParseSize = useMaxMessageParseSize();
+	const maxMarkdownParseLength = useMaxMarkdownParseLength();
 
 	const { t } = useTranslation();
 
-	const normalizedMessage = useNormalizedMessage(message, maxMessageParseSize);
+	const normalizedMessage = useNormalizedMessage(message, maxMarkdownParseLength);
 
 	const isMessageEncrypted = encrypted && normalizedMessage?.e2e === 'pending';
 

@@ -57,7 +57,10 @@ const normalizeAttachments = (attachments: MessageAttachment[], name?: string, t
 	});
 };
 
-export const useNormalizedMessage = <TMessage extends IMessage>(message: TMessage, maxMessageParseSize: number): MessageWithMdEnforced => {
+export const useNormalizedMessage = <TMessage extends IMessage>(
+	message: TMessage,
+	maxMarkdownParseLength: number,
+): MessageWithMdEnforced => {
 	const katex = useMessageListKatex();
 	const katexEnabled = !!katex;
 	const customDomains = useAutoLinkDomains();
@@ -77,7 +80,7 @@ export const useNormalizedMessage = <TMessage extends IMessage>(message: TMessag
 			}),
 		};
 
-		if (message.msg && message.msg.length > maxMessageParseSize) {
+		if (message.msg && message.msg.length > maxMarkdownParseLength) {
 			return {
 				...message,
 				md: [
@@ -115,6 +118,6 @@ export const useNormalizedMessage = <TMessage extends IMessage>(message: TMessag
 		katex?.parenthesisSyntaxEnabled,
 		message,
 		autoTranslateOptions,
-		maxMessageParseSize,
+		maxMarkdownParseLength,
 	]);
 };

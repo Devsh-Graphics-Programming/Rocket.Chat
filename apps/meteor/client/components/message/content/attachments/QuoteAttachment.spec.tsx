@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react';
 
 import { QuoteAttachment } from './QuoteAttachment';
 
-jest.mock('../../hooks/useMaxMessageParseSize', () => ({
-	useMaxMessageParseSize: () => 100,
+jest.mock('../../hooks/useMaxMarkdownParseLength', () => ({
+	useMaxMarkdownParseLength: () => 100,
 }));
 
 jest.mock('@rocket.chat/ui-contexts', () => ({
@@ -28,12 +28,12 @@ const baseAttachment = {
 };
 
 describe('QuoteAttachment', () => {
-	it('renders MessageContentBody when text length is within maxMessageParseSize', () => {
+	it('renders MessageContentBody when text length is within maxMarkdownParseLength', () => {
 		render(<QuoteAttachment attachment={baseAttachment as any} />);
 		expect(screen.getByTestId('message-content-body')).toBeInTheDocument();
 	});
 
-	it('renders plain text when text exceeds maxMessageParseSize', () => {
+	it('renders plain text when text exceeds maxMarkdownParseLength', () => {
 		const longText = 'a'.repeat(101);
 		const attachment = { ...baseAttachment, text: longText };
 

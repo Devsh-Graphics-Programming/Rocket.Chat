@@ -32,7 +32,7 @@ describe('useMessageBody', () => {
 		mockParseMessageTextToAstMarkdown.mockClear();
 	});
 
-	it('should return raw msg and skips parsing when msg exceeds maxMessageParseSize', () => {
+	it('should return raw msg and skips parsing when msg exceeds maxMarkdownParseLength', () => {
 		const longMsg = 'a'.repeat(101);
 		const message = { ...baseMessage, msg: longMsg, md: [{ type: 'PARAGRAPH', value: [] }] };
 
@@ -42,7 +42,7 @@ describe('useMessageBody', () => {
 		expect(mockParseMessageTextToAstMarkdown).not.toHaveBeenCalled();
 	});
 
-	it('should call parser when message has md and is within maxMessageParseSize', () => {
+	it('should call parser when message has md and is within maxMarkdownParseLength', () => {
 		const md = [{ type: 'PARAGRAPH', value: [] }];
 		const message = { ...baseMessage, msg: 'Hello world', md };
 		mockParseMessageTextToAstMarkdown.mockReturnValue({ ...message, md });
