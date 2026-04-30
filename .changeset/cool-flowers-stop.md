@@ -1,6 +1,6 @@
 ---
-'@rocket.chat/i18n': patch
-'@rocket.chat/meteor': patch
+'@rocket.chat/i18n': minor
+'@rocket.chat/meteor': minor
 ---
 
-Fixes workspace freezing when rendering massive markdown messages
+Adds `Message_MaxMarkdownParseLength` setting to limit the number of characters processed by the message parser.
