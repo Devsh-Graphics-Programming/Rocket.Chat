@@ -1,4 +1,4 @@
-import type { IMessage } from '@rocket.chat/core-typings';
+import { isTranslatedMessage, type IMessage } from '@rocket.chat/core-typings';
 import type { Options, Root } from '@rocket.chat/message-parser';
 import { useMemo } from 'react';
 
@@ -16,7 +16,17 @@ export const useMessageBody = (message: IMessage | undefined, maxMarkdownParseLe
 		}
 
 		if (message.msg && message.msg.length > maxMarkdownParseLength) {
-			return message.msg;
+			const { showAutoTranslate, autoTranslateLanguage } = autoTranslateOptions;
+			const translations = autoTranslateLanguage && isTranslatedMessage(message) && message.translations;
+			const translated = showAutoTranslate(message);
+			const text = (translated && translations && translations[autoTranslateLanguage]) || message.msg;
+
+			return [
+				{
+					type: 'PARAGRAPH',
+					value: [{ type: 'PLAIN_TEXT', value: text }],
+				},
+			];
 		}
 
 		if (message.md) {

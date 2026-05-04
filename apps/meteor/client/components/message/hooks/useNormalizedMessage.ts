@@ -6,6 +6,7 @@ import {
 	isFileAudioAttachment,
 	isFileVideoAttachment,
 	isQuoteAttachment,
+	isTranslatedMessage,
 } from '@rocket.chat/core-typings';
 import type { Options } from '@rocket.chat/message-parser';
 import { useMemo } from 'react';
@@ -81,12 +82,17 @@ export const useNormalizedMessage = <TMessage extends IMessage>(
 		};
 
 		if (message.msg && message.msg.length > maxMarkdownParseLength) {
+			const { showAutoTranslate, autoTranslateLanguage } = autoTranslateOptions;
+			const translations = autoTranslateLanguage && isTranslatedMessage(message) && message.translations;
+			const translated = showAutoTranslate(message);
+			const text = (translated && translations && translations[autoTranslateLanguage]) || message.msg;
+
 			return {
 				...message,
 				md: [
 					{
 						type: 'PARAGRAPH',
-						value: [{ type: 'PLAIN_TEXT', value: message.msg }],
+						value: [{ type: 'PLAIN_TEXT', value: text }],
 					},
 				],
 				attachments: message.attachments
