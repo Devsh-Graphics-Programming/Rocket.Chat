@@ -4,15 +4,17 @@ import { useMessageBody } from './useMessageBody';
 
 const mockParseMessageTextToAstMarkdown = jest.fn();
 
+let mockAutoTranslateOptions = {
+	showAutoTranslate: () => false,
+	autoTranslateLanguage: '',
+};
+
 jest.mock('./useAutoLinkDomains', () => ({
 	useAutoLinkDomains: () => [],
 }));
 
 jest.mock('../../../../components/message/list/MessageListContext', () => ({
-	useMessageListAutoTranslate: () => ({
-		showAutoTranslate: () => false,
-		autoTranslateLanguage: '',
-	}),
+	useMessageListAutoTranslate: () => mockAutoTranslateOptions,
 }));
 
 jest.mock('../../../../lib/parseMessageTextToAstMarkdown', () => ({
@@ -32,13 +34,18 @@ describe('useMessageBody', () => {
 		mockParseMessageTextToAstMarkdown.mockClear();
 	});
 
-	it('should return raw msg and skips parsing when msg exceeds maxMarkdownParseLength', () => {
+	it('should return PARAGRAPH node with translated text when msg exceeds maxMarkdownParseLength', () => {
 		const longMsg = 'a'.repeat(101);
 		const message = { ...baseMessage, msg: longMsg, md: [{ type: 'PARAGRAPH', value: [] }] };
 
 		const { result } = renderHook(() => useMessageBody(message as any, 100));
 
-		expect(result.current).toBe(longMsg);
+		expect(result.current).toEqual([
+			{
+				type: 'PARAGRAPH',
+				value: [{ type: 'PLAIN_TEXT', value: longMsg }],
+			},
+		]);
 		expect(mockParseMessageTextToAstMarkdown).not.toHaveBeenCalled();
 	});
 
@@ -60,5 +67,31 @@ describe('useMessageBody', () => {
 
 		expect(mockParseMessageTextToAstMarkdown).not.toHaveBeenCalled();
 		expect(result.current).toBe('Hello world');
+	});
+
+	it('should return PARAGRAPH node with translated text when auto-translate is active and msg exceeds limit', () => {
+		const longMsg = 'a'.repeat(101);
+		const translatedText = 'long translated text';
+
+		mockAutoTranslateOptions = {
+			showAutoTranslate: () => true,
+			autoTranslateLanguage: 'en',
+		};
+
+		const message = {
+			...baseMessage,
+			msg: longMsg,
+			translations: { en: translatedText },
+		};
+
+		const { result } = renderHook(() => useMessageBody(message as any, 100));
+
+		expect(result.current).toEqual([
+			{
+				type: 'PARAGRAPH',
+				value: [{ type: 'PLAIN_TEXT', value: translatedText }],
+			},
+		]);
+		expect(mockParseMessageTextToAstMarkdown).not.toHaveBeenCalled();
 	});
 });

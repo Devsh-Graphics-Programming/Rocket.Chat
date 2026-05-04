@@ -4,12 +4,14 @@ import { useNormalizedMessage } from './useNormalizedMessage';
 
 const mockParseMessageTextToAstMarkdown = jest.fn((msg: any, ..._args: any[]) => msg);
 
+let mockAutoTranslateOptions = {
+	showAutoTranslate: () => false,
+	autoTranslateLanguage: '',
+};
+
 jest.mock('../list/MessageListContext', () => ({
 	useMessageListKatex: () => null,
-	useMessageListAutoTranslate: () => ({
-		showAutoTranslate: () => false,
-		autoTranslateLanguage: '',
-	}),
+	useMessageListAutoTranslate: () => mockAutoTranslateOptions,
 	useMessageListShowColors: () => false,
 }));
 
@@ -64,5 +66,31 @@ describe('useNormalizedMessage', () => {
 
 		expect(mockParseMessageTextToAstMarkdown).not.toHaveBeenCalled();
 		expect(result.current.attachments).toEqual(attachments);
+	});
+
+	it('should return PARAGRAPH node with translated text when auto-translate is active and msg exceeds limit', () => {
+		const longMsg = 'a'.repeat(101);
+		const translatedText = 'long translated text';
+
+		mockAutoTranslateOptions = {
+			showAutoTranslate: () => true,
+			autoTranslateLanguage: 'en',
+		};
+
+		const message = {
+			...baseMessage,
+			msg: longMsg,
+			translations: { en: translatedText },
+		};
+
+		const { result } = renderHook(() => useNormalizedMessage(message as any, 100));
+
+		expect(result.current.md).toEqual([
+			{
+				type: 'PARAGRAPH',
+				value: [{ type: 'PLAIN_TEXT', value: translatedText }],
+			},
+		]);
+		expect(mockParseMessageTextToAstMarkdown).not.toHaveBeenCalled();
 	});
 });
