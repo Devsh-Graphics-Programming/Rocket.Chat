@@ -2,6 +2,8 @@ import { isE2EEMessage } from '@rocket.chat/core-typings';
 import type { IMessage } from '@rocket.chat/core-typings';
 import { parse } from '@rocket.chat/message-parser';
 
+import { settings } from '../../../../app/settings/server';
+
 type ParserConfig = {
 	colors?: boolean;
 	emoticons?: boolean;
@@ -23,6 +25,11 @@ export class BeforeSaveMarkdownParser {
 		}
 
 		if (isE2EEMessage(message)) {
+			return message;
+		}
+
+		const maxParseLength = settings.get<number>('Message_MaxMarkdownParseLength');
+		if (maxParseLength > 0 && message.msg && message.msg.length > maxParseLength) {
 			return message;
 		}
 
