@@ -32,6 +32,10 @@ const baseMessage = {
 describe('useNormalizedMessage', () => {
 	beforeEach(() => {
 		mockParseMessageTextToAstMarkdown.mockClear();
+		mockAutoTranslateOptions = {
+			showAutoTranslate: () => false,
+			autoTranslateLanguage: '',
+		};
 	});
 
 	it('should skip parsing and returns PARAGRAPH node when msg exceeds maxMarkdownParseLength', () => {

@@ -32,27 +32,33 @@ const baseMessage = {
 describe('useMessageBody', () => {
 	beforeEach(() => {
 		mockParseMessageTextToAstMarkdown.mockClear();
+		mockAutoTranslateOptions = {
+			showAutoTranslate: () => false,
+			autoTranslateLanguage: '',
+		};
 	});
 
-	it('should return PARAGRAPH node with translated text when msg exceeds maxMarkdownParseLength', () => {
+	it('should not call parser when message exceeds maxMarkdownParseLength', () => {
 		const longMsg = 'a'.repeat(101);
-		const message = { ...baseMessage, msg: longMsg, md: [{ type: 'PARAGRAPH', value: [] }] };
+		const message = { ...baseMessage, msg: longMsg };
+		mockParseMessageTextToAstMarkdown.mockReturnValue(message);
 
 		const { result } = renderHook(() => useMessageBody(message as any, 100));
 
-		expect(result.current).toEqual([
+		expect(mockParseMessageTextToAstMarkdown).not.toHaveBeenCalledWith(message, expect.anything(), expect.anything());
+		expect(result.current).toStrictEqual([
 			{
 				type: 'PARAGRAPH',
 				value: [{ type: 'PLAIN_TEXT', value: longMsg }],
 			},
 		]);
-		expect(mockParseMessageTextToAstMarkdown).not.toHaveBeenCalled();
 	});
 
 	it('should call parser when message has md and is within maxMarkdownParseLength', () => {
-		const md = [{ type: 'PARAGRAPH', value: [] }];
-		const message = { ...baseMessage, msg: 'Hello world', md };
-		mockParseMessageTextToAstMarkdown.mockReturnValue({ ...message, md });
+		const text = 'Hello world';
+		const md = [{ type: 'PARAGRAPH', value: [{ type: 'PLAIN_TEXT', value: text }] }];
+		const message = { ...baseMessage, msg: text, md };
+		mockParseMessageTextToAstMarkdown.mockReturnValue(message);
 
 		const { result } = renderHook(() => useMessageBody(message as any, 100));
 
