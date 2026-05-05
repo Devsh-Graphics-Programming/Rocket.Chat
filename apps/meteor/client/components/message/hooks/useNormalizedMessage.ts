@@ -69,18 +69,6 @@ export const useNormalizedMessage = <TMessage extends IMessage>(
 	const showColors = useMessageListShowColors();
 
 	return useMemo(() => {
-		const parseOptions: Options = {
-			colors: showColors,
-			emoticons: true,
-			customDomains,
-			...(katexEnabled && {
-				katex: {
-					dollarSyntax: katex.dollarSyntaxEnabled,
-					parenthesisSyntax: katex.parenthesisSyntaxEnabled,
-				},
-			}),
-		};
-
 		if (message.msg && message.msg.length > maxMarkdownParseLength) {
 			const { showAutoTranslate, autoTranslateLanguage } = autoTranslateOptions;
 			const translations = autoTranslateLanguage && isTranslatedMessage(message) && message.translations;
@@ -104,6 +92,18 @@ export const useNormalizedMessage = <TMessage extends IMessage>(
 					: message.attachments,
 			};
 		}
+
+		const parseOptions: Options = {
+			colors: showColors,
+			emoticons: true,
+			customDomains,
+			...(katexEnabled && {
+				katex: {
+					dollarSyntax: katex.dollarSyntaxEnabled,
+					parenthesisSyntax: katex.parenthesisSyntaxEnabled,
+				},
+			}),
+		};
 
 		const normalizedMessage = parseMessageTextToAstMarkdown(message, parseOptions, autoTranslateOptions);
 
