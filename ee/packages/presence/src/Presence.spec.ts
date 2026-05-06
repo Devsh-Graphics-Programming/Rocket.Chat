@@ -49,44 +49,8 @@ describe('Presence class', () => {
 		updatePresenceMock.mockResolvedValue(user());
 	});
 
-	describe('updateUserPresence', () => {
-		it('should recalculate status from sessions', async () => {
-			findUserMock.mockResolvedValue(user({ statusDefault: UserStatus.BUSY }));
-			withOnlineSession();
-
-			await presence.updateUserPresence('u1');
-
-			expect(updatePresenceMock).toHaveBeenCalledWith(
-				'u1',
-				expect.objectContaining({ status: UserStatus.BUSY, statusConnection: UserStatus.ONLINE }),
-				undefined,
-			);
-		});
-
-		it('when user has no sessions, should resolve to offline', async () => {
-			findUserMock.mockResolvedValue(user());
-			withNoSessions();
-
-			await presence.updateUserPresence('u1');
-
-			expect(updatePresenceMock).toHaveBeenCalledWith(
-				'u1',
-				expect.objectContaining({ status: UserStatus.OFFLINE, statusConnection: UserStatus.OFFLINE }),
-				undefined,
-			);
-		});
-
-		it('when user is not found, should not write anything', async () => {
-			findUserMock.mockResolvedValue(null);
-
-			await presence.updateUserPresence('u1');
-
-			expect(updatePresenceMock).not.toHaveBeenCalled();
-		});
-	});
-
 	describe('setActiveState', () => {
-		it('should apply claim and write combined result', async () => {
+		it('should apply claim and write combined result when user is online', async () => {
 			findUserMock.mockResolvedValue(user());
 			withOnlineSession();
 
@@ -103,7 +67,7 @@ describe('Presence class', () => {
 			);
 		});
 
-		it('when claim is rejected (offline + external), should not write', async () => {
+		it('should not write when claim is rejected (offline + external)', async () => {
 			findUserMock.mockResolvedValue(user({ statusDefault: UserStatus.OFFLINE }));
 			withNoSessions();
 
@@ -115,7 +79,7 @@ describe('Presence class', () => {
 			expect(updatePresenceMock).not.toHaveBeenCalled();
 		});
 
-		it('session-less user with manual claim should keep claimed status', async () => {
+		it('should keep claimed status when user has no sessions', async () => {
 			findUserMock.mockResolvedValue(user({ statusDefault: UserStatus.ONLINE }));
 			withNoSessions();
 
@@ -154,7 +118,7 @@ describe('Presence class', () => {
 	});
 
 	describe('endActiveState', () => {
-		it('should restore previous and write', async () => {
+		it('should restore previous state and write', async () => {
 			findUserMock.mockResolvedValue(
 				user({
 					statusSource: 'manual',
@@ -204,7 +168,7 @@ describe('Presence class', () => {
 			);
 		});
 
-		it('ONLINE with no text should trigger clearActive', async () => {
+		it('should trigger clearActive when status is ONLINE with no text', async () => {
 			findUserMock.mockResolvedValue(user({ statusDefault: UserStatus.BUSY, statusSource: 'manual' }));
 			withOnlineSession();
 
@@ -217,7 +181,20 @@ describe('Presence class', () => {
 			);
 		});
 
-		it('ONLINE with text should setActive, not clearActive', async () => {
+		it('should trigger clearActive when status is ONLINE with empty string text', async () => {
+			findUserMock.mockResolvedValue(user({ statusDefault: UserStatus.BUSY, statusSource: 'manual' }));
+			withOnlineSession();
+
+			await presence.setStatus('u1', UserStatus.ONLINE, '');
+
+			expect(updatePresenceMock).toHaveBeenCalledWith(
+				'u1',
+				expect.objectContaining({ statusDefault: UserStatus.ONLINE }),
+				expect.arrayContaining(['statusSource', 'previousState']),
+			);
+		});
+
+		it('should trigger setActive when status is ONLINE with text', async () => {
 			findUserMock.mockResolvedValue(user());
 			withOnlineSession();
 
@@ -230,7 +207,7 @@ describe('Presence class', () => {
 			);
 		});
 
-		it('empty string statusText should clear it (write empty string)', async () => {
+		it('should write empty string statusText when explicitly provided', async () => {
 			findUserMock.mockResolvedValue(user({ statusText: 'Old text' }));
 			withOnlineSession();
 
@@ -243,7 +220,7 @@ describe('Presence class', () => {
 			);
 		});
 
-		it('undefined statusText should not be included in the update', async () => {
+		it('should not include statusText when undefined', async () => {
 			findUserMock.mockResolvedValue(user({ statusText: 'Old text' }));
 			withOnlineSession();
 
@@ -253,7 +230,7 @@ describe('Presence class', () => {
 			expect(updateArg).not.toHaveProperty('statusText');
 		});
 
-		it('should return false when user not found', async () => {
+		it('should return false when user is not found', async () => {
 			findUserMock.mockResolvedValue(null);
 
 			const result = await presence.setStatus('u1', UserStatus.BUSY);

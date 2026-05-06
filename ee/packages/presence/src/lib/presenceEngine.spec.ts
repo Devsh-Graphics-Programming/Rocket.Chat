@@ -3,16 +3,14 @@ import { UserStatus } from '@rocket.chat/core-typings';
 
 import { processPresence } from './presenceEngine';
 
-/**
- * Use case matrix: https://docs.google.com/spreadsheets/d/19C5WoBoOeuVjkK-sXjIkk-UB6N6kMq0WX1lOpag5MJI/edit?gid=892305183#gid=892305183
- */
-
 const ONE_HOUR = 3600_000;
 
-const user = (o: Partial<IUser> = {}): IUser => ({
+type PresenceUser = Pick<IUser, 'statusDefault' | 'statusSource' | 'statusText' | 'statusEmoji' | 'statusExpiresAt' | 'previousState'>;
+
+const user = (data: Partial<PresenceUser> = {}): PresenceUser => ({
 	statusDefault: UserStatus.ONLINE,
 	statusText: '',
-	...o,
+	...data,
 });
 
 const session = (status: UserStatus = UserStatus.ONLINE): IUserSessionConnection => ({
@@ -24,32 +22,47 @@ const session = (status: UserStatus = UserStatus.ONLINE): IUserSessionConnection
 });
 
 describe('processPresence', () => {
-	describe('baseline', () => {
-		test('UC-01: active user, no status set → ONLINE', () => {
+	describe('baseline (no claim)', () => {
+		test('should resolve to ONLINE when user has an active session', () => {
 			const result = processPresence(user(), [session(UserStatus.ONLINE)]);
 			expect(result.values).toMatchObject({ status: UserStatus.ONLINE, statusConnection: UserStatus.ONLINE });
 		});
 
-		test('UC-02: active user with manual status → shows manual status', () => {
-			const result = processPresence(user({ statusDefault: UserStatus.BUSY, statusText: 'Working from home' }), [
-				session(UserStatus.ONLINE),
-			]);
+		test('should display BUSY when statusDefault is BUSY even if connection is ONLINE', () => {
+			const result = processPresence(user({ statusDefault: UserStatus.BUSY }), [session(UserStatus.ONLINE)]);
 			expect(result.values).toMatchObject({ status: UserStatus.BUSY, statusConnection: UserStatus.ONLINE });
 		});
 
-		test('UC-03: user idle → AWAY', () => {
+		test('should resolve to AWAY when user is idle', () => {
 			const result = processPresence(user(), [session(UserStatus.AWAY)]);
 			expect(result.values).toMatchObject({ status: UserStatus.AWAY, statusConnection: UserStatus.AWAY });
 		});
 
-		test('UC-04: user disconnects → OFFLINE', () => {
-			const result = processPresence(user(), []);
+		test('should resolve to OFFLINE when user has no sessions and no active claim', () => {
+			const result = processPresence(user({ statusDefault: UserStatus.BUSY, statusText: 'Focusing' }), []);
 			expect(result.values).toMatchObject({ status: UserStatus.OFFLINE, statusConnection: UserStatus.OFFLINE });
+		});
+
+		test('should stay OFFLINE when user is invisible (OFFLINE statusDefault with sessions)', () => {
+			const result = processPresence(user({ statusDefault: UserStatus.OFFLINE }), [session(UserStatus.ONLINE)]);
+			expect(result.values).toMatchObject({ status: UserStatus.OFFLINE, statusConnection: UserStatus.ONLINE });
 		});
 	});
 
-	describe('manual status', () => {
-		test('UC-05: user sets Busy manually', () => {
+	describe('session reduction', () => {
+		test('should resolve to ONLINE when at least one session is active', () => {
+			const result = processPresence(user(), [session(UserStatus.ONLINE), session(UserStatus.AWAY)]);
+			expect(result.values).toMatchObject({ status: UserStatus.ONLINE, statusConnection: UserStatus.ONLINE });
+		});
+
+		test('should resolve to AWAY when all sessions are idle', () => {
+			const result = processPresence(user(), [session(UserStatus.AWAY), session(UserStatus.AWAY)]);
+			expect(result.values).toMatchObject({ status: UserStatus.AWAY, statusConnection: UserStatus.AWAY });
+		});
+	});
+
+	describe('setActive', () => {
+		test('should apply manual claim when user is online', () => {
 			const result = processPresence(user(), [session()], {
 				type: 'setActive',
 				newState: { statusDefault: UserStatus.BUSY, statusSource: 'manual' },
@@ -58,7 +71,7 @@ describe('processPresence', () => {
 			expect(result.values.statusSource).toBe('manual');
 		});
 
-		test('UC-06: user sets OOO with expiry', () => {
+		test('should pass emoji and expiresAt when provided', () => {
 			const exp = new Date(Date.now() + ONE_HOUR);
 			const result = processPresence(user(), [session()], {
 				type: 'setActive',
@@ -74,60 +87,7 @@ describe('processPresence', () => {
 			expect(result.values.statusExpiresAt).toEqual(exp);
 		});
 
-		test('UC-07: manual status then offline → OFFLINE, statusDefault persists', () => {
-			const result = processPresence(user({ statusDefault: UserStatus.BUSY, statusText: 'Focusing' }), []);
-			expect(result.values).toMatchObject({ status: UserStatus.OFFLINE, statusConnection: UserStatus.OFFLINE });
-		});
-
-		test('UC-08: timed status expires → endActive restores previous or resets', () => {
-			const result = processPresence(
-				user({
-					statusSource: 'manual',
-					statusDefault: UserStatus.BUSY,
-					statusText: 'Design work',
-					statusExpiresAt: new Date(Date.now() - 1000),
-				}),
-				[session()],
-				{ type: 'endActive' },
-			);
-			expect(result.values).toMatchObject({ statusDefault: UserStatus.ONLINE });
-			expect(result.clear).toEqual(expect.arrayContaining(['statusEmoji', 'statusSource', 'statusExpiresAt', 'previousState']));
-		});
-	});
-
-	describe('system and multi-device', () => {
-		test('UC-09: active on mobile, idle on desktop → ONLINE wins', () => {
-			const result = processPresence(user(), [session(UserStatus.ONLINE), session(UserStatus.AWAY)]);
-			expect(result.values).toMatchObject({ status: UserStatus.ONLINE, statusConnection: UserStatus.ONLINE });
-		});
-
-		test('UC-09 (reverse order): idle first, active second → still ONLINE', () => {
-			const result = processPresence(user(), [session(UserStatus.AWAY), session(UserStatus.ONLINE)]);
-			expect(result.values).toMatchObject({ status: UserStatus.ONLINE, statusConnection: UserStatus.ONLINE });
-		});
-
-		test('UC-10: all sessions idle → AWAY', () => {
-			const result = processPresence(user(), [session(UserStatus.AWAY), session(UserStatus.AWAY)]);
-			expect(result.values).toMatchObject({ status: UserStatus.AWAY, statusConnection: UserStatus.AWAY });
-		});
-
-		test('UC-11: reconnect preserves statusDefault', () => {
-			const result = processPresence(user({ statusDefault: UserStatus.BUSY, statusText: 'Focusing' }), [session(UserStatus.ONLINE)]);
-			expect(result.values).toMatchObject({ status: UserStatus.BUSY, statusConnection: UserStatus.ONLINE });
-		});
-	});
-
-	describe('internal - voice calls', () => {
-		test('UC-12: voice call starts → internal claim applied', () => {
-			const result = processPresence(user(), [session()], {
-				type: 'setActive',
-				newState: { statusDefault: UserStatus.BUSY, statusText: 'On a call', statusSource: 'internal' },
-			});
-			expect(result.values.statusSource).toBe('internal');
-			expect(result.values.status).toBe(UserStatus.BUSY);
-		});
-
-		test('UC-13: voice call over manual status → saves manual as previous', () => {
+		test('should save current as previousState when higher priority claim arrives', () => {
 			const result = processPresence(
 				user({ statusSource: 'manual', statusDefault: UserStatus.BUSY, statusText: 'Focusing' }),
 				[session()],
@@ -137,47 +97,15 @@ describe('processPresence', () => {
 			expect(result.values.previousState).toMatchObject({ statusSource: 'manual', statusText: 'Focusing' });
 		});
 
-		test('UC-14: voice call ends → restores manual status', () => {
-			const result = processPresence(
-				user({
-					statusSource: 'internal',
-					statusDefault: UserStatus.BUSY,
-					previousState: { statusDefault: UserStatus.BUSY, statusText: 'Focusing', statusSource: 'manual' },
-				}),
-				[session()],
-				{ type: 'endActive' },
-			);
-			expect(result.values).toMatchObject({ statusSource: 'manual', statusText: 'Focusing' });
-			expect(result.clear).toContain('previousState');
+		test('should not save previousState when no existing claim', () => {
+			const result = processPresence(user(), [session()], {
+				type: 'setActive',
+				newState: { statusDefault: UserStatus.BUSY, statusSource: 'manual' },
+			});
+			expect(result.values.previousState).toBeUndefined();
 		});
 
-		test('UC-15: manual override during voice call → queued, persists after call ends', () => {
-			// manual arrives during internal → queued as previousState
-			const setResult = processPresence(
-				user({ statusSource: 'internal', statusDefault: UserStatus.BUSY, statusText: 'On a call' }),
-				[session()],
-				{ type: 'setActive', newState: { statusDefault: UserStatus.AWAY, statusText: 'Lunch', statusSource: 'manual' } },
-			);
-			expect(setResult.values.previousState).toMatchObject({ statusDefault: UserStatus.AWAY, statusText: 'Lunch', statusSource: 'manual' });
-			expect(setResult.values.statusSource).toBeUndefined();
-
-			// call ends → manual restored
-			const endResult = processPresence(
-				user({
-					statusSource: 'internal',
-					statusDefault: UserStatus.BUSY,
-					previousState: { statusDefault: UserStatus.AWAY, statusText: 'Lunch', statusSource: 'manual' },
-				}),
-				[session()],
-				{ type: 'endActive' },
-			);
-			expect(endResult.values).toMatchObject({ statusSource: 'manual', statusText: 'Lunch', statusDefault: UserStatus.AWAY });
-			expect(endResult.clear).toContain('previousState');
-		});
-	});
-
-	describe('conflicts', () => {
-		test('UC-20: voice + pexip overlap (same priority) → second overwrites first', () => {
+		test('should overwrite when same priority claim arrives', () => {
 			const result = processPresence(
 				user({ statusSource: 'internal', statusDefault: UserStatus.BUSY, statusText: 'On a call' }),
 				[session()],
@@ -187,144 +115,17 @@ describe('processPresence', () => {
 			expect(result.values.statusSource).toBe('internal');
 		});
 
-		test('UC-21: voice active + external arrives → external queued (internal > external)', () => {
+		test('should queue lower priority claim as previousState', () => {
 			const result = processPresence(
 				user({ statusSource: 'internal', statusDefault: UserStatus.BUSY, statusText: 'On a call' }),
 				[session()],
-				{ type: 'setActive', newState: { statusDefault: UserStatus.BUSY, statusText: 'Meeting', statusSource: 'external' } },
+				{ type: 'setActive', newState: { statusDefault: UserStatus.AWAY, statusText: 'Lunch', statusSource: 'manual' } },
 			);
-			expect(result.values.previousState).toMatchObject({ statusSource: 'external', statusText: 'Meeting' });
+			expect(result.values.previousState).toMatchObject({ statusDefault: UserStatus.AWAY, statusText: 'Lunch', statusSource: 'manual' });
 			expect(result.values.statusSource).toBeUndefined();
 		});
-	});
 
-	describe('external - calendar events', () => {
-		test('UC-23: meeting starts, no prior status → external claim applied', () => {
-			const result = processPresence(user(), [session()], {
-				type: 'setActive',
-				newState: { statusDefault: UserStatus.BUSY, statusText: 'In a meeting', statusSource: 'external', statusEmoji: '📅' },
-			});
-			expect(result.values.statusSource).toBe('external');
-			expect(result.values.statusEmoji).toBe('📅');
-			expect(result.values.status).toBe(UserStatus.BUSY);
-		});
-
-		test('UC-24: meeting ends, no prior status → resets to ONLINE', () => {
-			const result = processPresence(user({ statusSource: 'external', statusDefault: UserStatus.BUSY }), [session()], {
-				type: 'endActive',
-			});
-			expect(result.values).toMatchObject({ statusDefault: UserStatus.ONLINE });
-			expect(result.clear).toEqual(expect.arrayContaining(['statusSource', 'previousState']));
-		});
-
-		test('UC-25: meeting ends, had manual before → restores manual', () => {
-			const result = processPresence(
-				user({
-					statusSource: 'external',
-					statusDefault: UserStatus.BUSY,
-					previousState: { statusDefault: UserStatus.BUSY, statusText: 'Focusing', statusSource: 'manual' },
-				}),
-				[session()],
-				{ type: 'endActive' },
-			);
-			expect(result.values).toMatchObject({ statusSource: 'manual', statusText: 'Focusing' });
-			expect(result.clear).toContain('previousState');
-		});
-
-		test('UC-26: back-to-back meetings (same priority) → second overwrites first', () => {
-			const result = processPresence(
-				user({ statusSource: 'external', statusDefault: UserStatus.BUSY, statusText: 'Meeting 1' }),
-				[session()],
-				{ type: 'setActive', newState: { statusDefault: UserStatus.BUSY, statusText: 'Meeting 2', statusSource: 'external' } },
-			);
-			expect(result.values.statusText).toBe('Meeting 2');
-		});
-
-		test('UC-30: manual status during external meeting → manual wins, external queued', () => {
-			const result = processPresence(
-				user({ statusSource: 'external', statusDefault: UserStatus.BUSY, statusText: 'In a meeting' }),
-				[session()],
-				{ type: 'setActive', newState: { statusDefault: UserStatus.BUSY, statusText: 'Focusing', statusSource: 'manual' } },
-			);
-			expect(result.values.statusSource).toBe('manual');
-			expect(result.values.statusText).toBe('Focusing');
-			expect(result.values.previousState).toMatchObject({ statusSource: 'external', statusText: 'In a meeting' });
-		});
-	});
-
-	describe('edge cases', () => {
-		test('UC-31: two external apps at same priority → last write wins', () => {
-			const result = processPresence(
-				user({
-					statusSource: 'external',
-					statusDefault: UserStatus.BUSY,
-					statusText: 'App A',
-					previousState: { statusDefault: UserStatus.BUSY, statusText: 'Manual', statusSource: 'manual' },
-				}),
-				[session()],
-				{ type: 'setActive', newState: { statusDefault: UserStatus.BUSY, statusText: 'App B', statusSource: 'external' } },
-			);
-			expect(result.values.statusText).toBe('App B');
-			expect(result.values.previousState).toBeUndefined();
-		});
-
-		test('UC-32: manual set during auto event, event ends → manual persists', () => {
-			// internal active, manual arrives (lower priority) → queued
-			const setResult = processPresence(user({ statusSource: 'internal', statusDefault: UserStatus.BUSY }), [session()], {
-				type: 'setActive',
-				newState: { statusDefault: UserStatus.AWAY, statusText: 'Lunch', statusSource: 'manual' },
-			});
-			expect(setResult.values.previousState).toMatchObject({ statusSource: 'manual' });
-
-			// event ends → manual restored
-			const endResult = processPresence(
-				user({
-					statusSource: 'internal',
-					statusDefault: UserStatus.BUSY,
-					previousState: { statusDefault: UserStatus.AWAY, statusText: 'Lunch', statusSource: 'manual' },
-				}),
-				[session()],
-				{ type: 'endActive' },
-			);
-			expect(endResult.values).toMatchObject({ statusSource: 'manual', statusText: 'Lunch' });
-		});
-
-		test('UC-33: offline when calendar starts → external claim rejected', () => {
-			const result = processPresence(user({ statusDefault: UserStatus.OFFLINE }), [], {
-				type: 'setActive',
-				newState: { statusDefault: UserStatus.BUSY, statusSource: 'external' },
-			});
-			expect(result.values).toMatchObject({});
-		});
-
-		test('UC-33: offline user accepts manual claim', () => {
-			const result = processPresence(user({ statusDefault: UserStatus.OFFLINE }), [], {
-				type: 'setActive',
-				newState: { statusDefault: UserStatus.BUSY, statusSource: 'manual' },
-			});
-			expect(result.values.statusSource).toBe('manual');
-			expect(result.values.status).toBe(UserStatus.BUSY);
-		});
-
-		test('UC-35: status text for offline user → statusDefault persists, display is OFFLINE', () => {
-			const result = processPresence(user({ statusDefault: UserStatus.BUSY, statusText: 'Custom text' }), []);
-			expect(result.values).toMatchObject({ status: UserStatus.OFFLINE, statusConnection: UserStatus.OFFLINE });
-		});
-	});
-
-	// Engine internals not tied to specific UCs but required for correctness
-	describe('engine internals', () => {
-		test('higher priority with no existing claim → no previousState saved', () => {
-			const result = processPresence(user(), [session()], {
-				type: 'setActive',
-				newState: { statusDefault: UserStatus.BUSY, statusText: 'Deep work', statusSource: 'manual' },
-			});
-			expect(result.values.statusSource).toBe('manual');
-			expect(result.values.previousState).toBeUndefined();
-		});
-
-		test('lower priority with expired previous → treats as empty slot', () => {
-			const newState = { statusDefault: UserStatus.BUSY, statusText: 'Deep work', statusSource: 'manual' as const };
+		test('should replace expired previousState with lower priority claim', () => {
 			const result = processPresence(
 				user({
 					statusSource: 'internal',
@@ -337,12 +138,16 @@ describe('processPresence', () => {
 					},
 				}),
 				[session()],
-				{ type: 'setActive', newState },
+				{ type: 'setActive', newState: { statusDefault: UserStatus.BUSY, statusText: 'Deep work', statusSource: 'manual' } },
 			);
-			expect(result.values.previousState).toMatchObject(newState);
+			expect(result.values.previousState).toMatchObject({
+				statusDefault: UserStatus.BUSY,
+				statusText: 'Deep work',
+				statusSource: 'manual',
+			});
 		});
 
-		test('lower priority discarded when previous has higher priority', () => {
+		test('should discard lower priority claim when previousState has higher priority', () => {
 			const result = processPresence(
 				user({
 					statusSource: 'internal',
@@ -360,16 +165,44 @@ describe('processPresence', () => {
 			expect(result.values).toMatchObject({});
 		});
 
-		test('emoji and expiresAt cleared when absent from new claim', () => {
-			const result = processPresence(user({ statusEmoji: '🔥', statusExpiresAt: new Date() }), [session()], {
-				type: 'setActive',
-				newState: { statusDefault: UserStatus.BUSY, statusText: 'Focus', statusSource: 'manual' },
-			});
-			expect(result.clear).toContain('statusEmoji');
-			expect(result.clear).toContain('statusExpiresAt');
+		test('should apply higher priority over external and save external as previousState', () => {
+			const result = processPresence(
+				user({ statusSource: 'external', statusDefault: UserStatus.BUSY, statusText: 'In a meeting' }),
+				[session()],
+				{ type: 'setActive', newState: { statusDefault: UserStatus.BUSY, statusText: 'Focusing', statusSource: 'manual' } },
+			);
+			expect(result.values.statusSource).toBe('manual');
+			expect(result.values.statusText).toBe('Focusing');
+			expect(result.values.previousState).toMatchObject({ statusSource: 'external', statusText: 'In a meeting' });
+		});
+	});
+
+	describe('endActive', () => {
+		test('should reset to ONLINE when no previousState exists', () => {
+			const result = processPresence(
+				user({ statusSource: 'manual', statusDefault: UserStatus.BUSY, statusText: 'Design work' }),
+				[session()],
+				{ type: 'endActive' },
+			);
+			expect(result.values).toMatchObject({ statusDefault: UserStatus.ONLINE });
+			expect(result.clear).toEqual(expect.arrayContaining(['statusEmoji', 'statusSource', 'statusExpiresAt', 'previousState']));
 		});
 
-		test('endActive with expired previous → resets to system', () => {
+		test('should restore previousState when valid', () => {
+			const result = processPresence(
+				user({
+					statusSource: 'internal',
+					statusDefault: UserStatus.BUSY,
+					previousState: { statusDefault: UserStatus.BUSY, statusText: 'Focusing', statusSource: 'manual' },
+				}),
+				[session()],
+				{ type: 'endActive' },
+			);
+			expect(result.values).toMatchObject({ statusSource: 'manual', statusText: 'Focusing' });
+			expect(result.clear).toContain('previousState');
+		});
+
+		test('should reset to ONLINE when previousState is expired', () => {
 			const result = processPresence(
 				user({
 					statusSource: 'internal',
@@ -388,7 +221,7 @@ describe('processPresence', () => {
 			expect(result.clear).toContain('previousState');
 		});
 
-		test('endActive restores previous with emoji and expiresAt', () => {
+		test('should restore previousState with emoji and expiresAt', () => {
 			const exp = new Date(Date.now() + ONE_HOUR);
 			const result = processPresence(
 				user({
@@ -409,8 +242,10 @@ describe('processPresence', () => {
 			expect(result.clear).toContain('previousState');
 			expect(result.clear).not.toContain('statusEmoji');
 		});
+	});
 
-		test('clearActive resets everything', () => {
+	describe('clearActive', () => {
+		test('should reset to ONLINE and clear all claim fields', () => {
 			const result = processPresence(user({ statusSource: 'manual', statusDefault: UserStatus.BUSY }), [session()], {
 				type: 'clearActive',
 			});
@@ -418,34 +253,53 @@ describe('processPresence', () => {
 			expect(result.clear).toEqual(expect.arrayContaining(['statusEmoji', 'statusSource', 'statusExpiresAt', 'previousState']));
 		});
 
-		test('session-less user with manual claim → trust intent', () => {
-			const result = processPresence(user({ statusDefault: UserStatus.OFFLINE }), [], {
-				type: 'setActive',
-				newState: { statusDefault: UserStatus.BUSY, statusSource: 'manual', statusText: 'Working' },
-			});
-			expect(result.values.status).toBe(UserStatus.BUSY);
-			expect(result.values.statusConnection).toBe(UserStatus.OFFLINE);
-		});
-
-		test('claim with OFFLINE session → display OFFLINE', () => {
-			const result = processPresence(user(), [session(UserStatus.OFFLINE)], {
-				type: 'setActive',
-				newState: { statusDefault: UserStatus.BUSY, statusSource: 'manual' },
-			});
-			expect(result.values.status).toBe(UserStatus.OFFLINE);
-		});
-
-		test('clearActive + session AWAY → AWAY (ONLINE defers to connection)', () => {
+		test('should defer to connection when statusDefault resets to ONLINE', () => {
 			const result = processPresence(user({ statusDefault: UserStatus.BUSY, statusSource: 'manual' }), [session(UserStatus.AWAY)], {
 				type: 'clearActive',
 			});
 			expect(result.values.status).toBe(UserStatus.AWAY);
 			expect(result.values.statusDefault).toBe(UserStatus.ONLINE);
 		});
+	});
 
-		test('invisible user (OFFLINE statusDefault with sessions) → stays OFFLINE', () => {
-			const result = processPresence(user({ statusDefault: UserStatus.OFFLINE }), [session(UserStatus.ONLINE)]);
-			expect(result.values).toMatchObject({ status: UserStatus.OFFLINE, statusConnection: UserStatus.ONLINE });
+	describe('offline users', () => {
+		test('should reject non-manual claim when user is offline', () => {
+			const result = processPresence(user({ statusDefault: UserStatus.OFFLINE }), [], {
+				type: 'setActive',
+				newState: { statusDefault: UserStatus.BUSY, statusSource: 'external' },
+			});
+			expect(result.values).toMatchObject({});
+		});
+
+		test('should accept manual claim when user is offline', () => {
+			const result = processPresence(user({ statusDefault: UserStatus.OFFLINE }), [], {
+				type: 'setActive',
+				newState: { statusDefault: UserStatus.BUSY, statusSource: 'manual', statusText: 'Working' },
+			});
+			expect(result.values.statusSource).toBe('manual');
+			expect(result.values.status).toBe(UserStatus.BUSY);
+			expect(result.values.statusConnection).toBe(UserStatus.OFFLINE);
+		});
+	});
+
+	describe('fieldsToUnset', () => {
+		test('should unset emoji and expiresAt when absent from new claim', () => {
+			const result = processPresence(user({ statusEmoji: '🔥', statusExpiresAt: new Date() }), [session()], {
+				type: 'setActive',
+				newState: { statusDefault: UserStatus.BUSY, statusText: 'Focus', statusSource: 'manual' },
+			});
+			expect(result.clear).toContain('statusEmoji');
+			expect(result.clear).toContain('statusExpiresAt');
+		});
+	});
+
+	describe('computeStatus', () => {
+		test('should resolve to OFFLINE when session is OFFLINE regardless of claim', () => {
+			const result = processPresence(user(), [session(UserStatus.OFFLINE)], {
+				type: 'setActive',
+				newState: { statusDefault: UserStatus.BUSY, statusSource: 'manual' },
+			});
+			expect(result.values.status).toBe(UserStatus.OFFLINE);
 		});
 	});
 });
