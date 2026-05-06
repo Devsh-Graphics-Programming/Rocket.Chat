@@ -230,6 +230,29 @@ describe('Presence class', () => {
 			);
 		});
 
+		it('empty string statusText should clear it (write empty string)', async () => {
+			findUserMock.mockResolvedValue(user({ statusText: 'Old text' }));
+			withOnlineSession();
+
+			await presence.setStatus('u1', UserStatus.BUSY, '');
+
+			expect(updatePresenceMock).toHaveBeenCalledWith(
+				'u1',
+				expect.objectContaining({ statusDefault: UserStatus.BUSY, statusText: '' }),
+				expect.any(Array),
+			);
+		});
+
+		it('undefined statusText should not be included in the update', async () => {
+			findUserMock.mockResolvedValue(user({ statusText: 'Old text' }));
+			withOnlineSession();
+
+			await presence.setStatus('u1', UserStatus.BUSY);
+
+			const updateArg = updatePresenceMock.mock.calls[0][1];
+			expect(updateArg).not.toHaveProperty('statusText');
+		});
+
 		it('should return false when user not found', async () => {
 			findUserMock.mockResolvedValue(null);
 
