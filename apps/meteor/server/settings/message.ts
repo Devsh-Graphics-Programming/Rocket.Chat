@@ -173,6 +173,7 @@ export const createMessageSettings = () =>
 			type: 'int',
 			public: true,
 			i18nDescription: 'Message_MaxMarkdownParseLength_Description',
+			alert: 'Message_MaxMarkdownParseLength_Alert',
 		});
 		await this.add('Message_AllowConvertLongMessagesToAttachment', true, {
 			type: 'boolean',
