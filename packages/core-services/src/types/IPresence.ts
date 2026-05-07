@@ -17,10 +17,7 @@ export interface IPresence extends IServiceClass {
 	removeLostConnections(nodeID: string): Promise<string[]>;
 	/** @deprecated Use setActiveState, endActiveState, or clearActiveState instead. */
 	setStatus(userId: string, status: UserStatus, statusText?: string): Promise<boolean>;
-	setActiveState(
-		userId: string,
-		newState: Pick<IUser, 'statusDefault' | 'statusSource' | 'statusText' | 'statusEmoji' | 'statusExpiresAt'>,
-	): Promise<void>;
+	setActiveState(userId: string, newState: Pick<IUser, 'statusDefault' | 'statusSource' | 'statusText' | 'statusExpiresAt'>): Promise<void>;
 	endActiveState(userId: string): Promise<void>;
 	clearActiveState(userId: string): Promise<void>;
 	setConnectionStatus(uid: string, status: UserStatus, session: string): Promise<boolean>;

@@ -273,7 +273,7 @@ export class Presence extends ServiceClass implements IPresence {
 	 */
 	async setActiveState(
 		userId: string,
-		newState: Pick<IUser, 'statusDefault' | 'statusSource' | 'statusText' | 'statusEmoji' | 'statusExpiresAt'>,
+		newState: Pick<IUser, 'statusDefault' | 'statusSource' | 'statusText' | 'statusExpiresAt'>,
 	): Promise<void> {
 		await this.updateUserPresence(userId, { type: 'setActive', newState });
 	}
@@ -312,7 +312,6 @@ export class Presence extends ServiceClass implements IPresence {
 				| 'statusDefault'
 				| 'statusSource'
 				| 'statusText'
-				| 'statusEmoji'
 				| 'statusExpiresAt'
 				| 'statusConnection'
 				| 'previousState'
@@ -325,7 +324,6 @@ export class Presence extends ServiceClass implements IPresence {
 				statusDefault: 1,
 				statusSource: 1,
 				statusText: 1,
-				statusEmoji: 1,
 				statusExpiresAt: 1,
 				statusConnection: 1,
 				previousState: 1,

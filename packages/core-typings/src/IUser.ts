@@ -187,13 +187,11 @@ export interface IUser extends IRocketChatRecord {
 	language?: string;
 	statusDefault?: UserStatus;
 	statusText?: string;
-	statusEmoji?: string;
 	statusSource?: PresenceSource;
 	statusExpiresAt?: Date;
 	previousState?: {
 		statusDefault: UserStatus;
 		statusText: string;
-		statusEmoji?: string;
 		statusSource: PresenceSource;
 		statusExpiresAt?: Date;
 	};

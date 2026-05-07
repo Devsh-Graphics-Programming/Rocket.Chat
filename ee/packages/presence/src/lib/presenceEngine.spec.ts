@@ -5,7 +5,7 @@ import { processPresence } from './presenceEngine';
 
 const ONE_HOUR = 3600_000;
 
-type PresenceUser = Pick<IUser, 'statusDefault' | 'statusSource' | 'statusText' | 'statusEmoji' | 'statusExpiresAt' | 'previousState'>;
+type PresenceUser = Pick<IUser, 'statusDefault' | 'statusSource' | 'statusText' | 'statusExpiresAt' | 'previousState'>;
 
 const user = (data: Partial<PresenceUser> = {}): PresenceUser => ({
 	statusDefault: UserStatus.ONLINE,
@@ -71,7 +71,7 @@ describe('processPresence', () => {
 			expect(result.values.statusSource).toBe('manual');
 		});
 
-		test('should pass emoji and expiresAt when provided', () => {
+		test('should pass expiresAt when provided', () => {
 			const exp = new Date(Date.now() + ONE_HOUR);
 			const result = processPresence(user(), [session()], {
 				type: 'setActive',
@@ -79,11 +79,9 @@ describe('processPresence', () => {
 					statusDefault: UserStatus.BUSY,
 					statusText: 'Out of office',
 					statusSource: 'manual',
-					statusEmoji: '🏖️',
 					statusExpiresAt: exp,
 				},
 			});
-			expect(result.values.statusEmoji).toBe('🏖️');
 			expect(result.values.statusExpiresAt).toEqual(exp);
 		});
 
@@ -185,7 +183,7 @@ describe('processPresence', () => {
 				{ type: 'endActive' },
 			);
 			expect(result.values).toMatchObject({ statusDefault: UserStatus.ONLINE });
-			expect(result.clear).toEqual(expect.arrayContaining(['statusEmoji', 'statusSource', 'statusExpiresAt', 'previousState']));
+			expect(result.clear).toEqual(expect.arrayContaining(['statusSource', 'statusExpiresAt', 'previousState']));
 		});
 
 		test('should restore previousState when valid', () => {
@@ -221,7 +219,7 @@ describe('processPresence', () => {
 			expect(result.clear).toContain('previousState');
 		});
 
-		test('should restore previousState with emoji and expiresAt', () => {
+		test('should restore previousState with expiresAt', () => {
 			const exp = new Date(Date.now() + ONE_HOUR);
 			const result = processPresence(
 				user({
@@ -231,16 +229,14 @@ describe('processPresence', () => {
 						statusDefault: UserStatus.BUSY,
 						statusText: 'Standup',
 						statusSource: 'external',
-						statusEmoji: '📅',
 						statusExpiresAt: exp,
 					},
 				}),
 				[session()],
 				{ type: 'endActive' },
 			);
-			expect(result.values).toMatchObject({ statusSource: 'external', statusEmoji: '📅', statusExpiresAt: exp });
+			expect(result.values).toMatchObject({ statusSource: 'external', statusExpiresAt: exp });
 			expect(result.clear).toContain('previousState');
-			expect(result.clear).not.toContain('statusEmoji');
 		});
 	});
 
@@ -250,7 +246,7 @@ describe('processPresence', () => {
 				type: 'clearActive',
 			});
 			expect(result.values).toMatchObject({ statusDefault: UserStatus.ONLINE, statusText: '', status: UserStatus.ONLINE });
-			expect(result.clear).toEqual(expect.arrayContaining(['statusEmoji', 'statusSource', 'statusExpiresAt', 'previousState']));
+			expect(result.clear).toEqual(expect.arrayContaining(['statusSource', 'statusExpiresAt', 'previousState']));
 		});
 
 		test('should defer to connection when statusDefault resets to ONLINE', () => {
@@ -283,12 +279,11 @@ describe('processPresence', () => {
 	});
 
 	describe('fieldsToUnset', () => {
-		test('should unset emoji and expiresAt when absent from new claim', () => {
-			const result = processPresence(user({ statusEmoji: '🔥', statusExpiresAt: new Date() }), [session()], {
+		test('should unset expiresAt when absent from new claim', () => {
+			const result = processPresence(user({ statusExpiresAt: new Date() }), [session()], {
 				type: 'setActive',
 				newState: { statusDefault: UserStatus.BUSY, statusText: 'Focus', statusSource: 'manual' },
 			});
-			expect(result.clear).toContain('statusEmoji');
 			expect(result.clear).toContain('statusExpiresAt');
 		});
 	});

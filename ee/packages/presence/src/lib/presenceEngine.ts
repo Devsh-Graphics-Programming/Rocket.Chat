@@ -2,7 +2,7 @@ import type { IUser, IUserSessionConnection } from '@rocket.chat/core-typings';
 import { UserStatus } from '@rocket.chat/core-typings';
 
 export type ClaimUpdate =
-	| { type: 'setActive'; newState: Pick<IUser, 'statusDefault' | 'statusSource' | 'statusText' | 'statusEmoji' | 'statusExpiresAt'> }
+	| { type: 'setActive'; newState: Pick<IUser, 'statusDefault' | 'statusSource' | 'statusText' | 'statusExpiresAt'> }
 	| { type: 'endActive' }
 	| { type: 'clearActive' };
 
@@ -13,18 +13,15 @@ const NO_PRIORITY = 4;
 
 const RESET_TO_ONLINE = {
 	set: { statusDefault: UserStatus.ONLINE, statusText: '' },
-	unset: ['statusEmoji', 'statusSource', 'statusExpiresAt', 'previousState'],
+	unset: ['statusSource', 'statusExpiresAt', 'previousState'],
 };
 
 function isExpired(expiresAt?: Date): boolean {
 	return expiresAt != null && expiresAt.getTime() < Date.now();
 }
 
-function fieldsToUnset(state: Pick<IUser, 'statusEmoji' | 'statusExpiresAt'>, extra?: string[]): string[] {
+function fieldsToUnset(state: Pick<IUser, 'statusExpiresAt'>, extra?: string[]): string[] {
 	const fields = new Set(extra);
-	if (!state.statusEmoji) {
-		fields.add('statusEmoji');
-	}
 	if (!state.statusExpiresAt) {
 		fields.add('statusExpiresAt');
 	}
@@ -62,7 +59,7 @@ function computeStatus(statusConnection: UserStatus, statusDefault: UserStatus):
  * Returns the DB fields to set/unset, or null if the claim is rejected.
  */
 function resolveIntent(
-	user: Pick<IUser, 'statusDefault' | 'statusSource' | 'statusText' | 'statusEmoji' | 'statusExpiresAt' | 'previousState'>,
+	user: Pick<IUser, 'statusDefault' | 'statusSource' | 'statusText' | 'statusExpiresAt' | 'previousState'>,
 	claimUpdate: ClaimUpdate,
 ): { set: Record<string, unknown> & { statusDefault?: UserStatus }; unset: string[] } | null {
 	const currentStatusDefault = user.statusDefault ?? UserStatus.ONLINE;
@@ -98,7 +95,6 @@ function resolveIntent(
 			? {
 					statusDefault: currentStatusDefault,
 					statusText: user.statusText ?? '',
-					statusEmoji: user.statusEmoji,
 					statusSource: user.statusSource,
 					statusExpiresAt: user.statusExpiresAt,
 				}
@@ -146,7 +142,7 @@ function resolveIntent(
  * Returns the DB fields to $set and optionally $unset.
  */
 export function processPresence(
-	user: Pick<IUser, 'statusDefault' | 'statusSource' | 'statusText' | 'statusEmoji' | 'statusExpiresAt' | 'previousState'>,
+	user: Pick<IUser, 'statusDefault' | 'statusSource' | 'statusText' | 'statusExpiresAt' | 'previousState'>,
 	sessions: IUserSessionConnection[],
 	claimUpdate?: ClaimUpdate,
 ): { values: Record<string, unknown>; clear?: string[] } {

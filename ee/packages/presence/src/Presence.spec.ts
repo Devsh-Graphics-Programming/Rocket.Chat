@@ -96,7 +96,7 @@ describe('Presence class', () => {
 			);
 		});
 
-		it('should pass emoji and expiresAt when provided', async () => {
+		it('should pass expiresAt when provided', async () => {
 			const expiresAt = new Date(Date.now() + 3600_000);
 			findUserMock.mockResolvedValue(user());
 			withOnlineSession();
@@ -105,15 +105,10 @@ describe('Presence class', () => {
 				statusDefault: UserStatus.BUSY,
 				statusSource: 'manual',
 				statusText: 'Focus',
-				statusEmoji: '🔥',
 				statusExpiresAt: expiresAt,
 			});
 
-			expect(updatePresenceMock).toHaveBeenCalledWith(
-				'u1',
-				expect.objectContaining({ statusEmoji: '🔥', statusExpiresAt: expiresAt }),
-				undefined,
-			);
+			expect(updatePresenceMock).toHaveBeenCalledWith('u1', expect.objectContaining({ statusExpiresAt: expiresAt }), undefined);
 		});
 	});
 
