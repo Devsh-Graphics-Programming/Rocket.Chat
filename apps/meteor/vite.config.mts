@@ -126,8 +126,10 @@ export default defineConfig(async () => {
 				// Rocket.Chat Packages
 				'@rocket.chat/api-client': path.resolve('../../packages/api-client/src/index.ts'),
 				'@rocket.chat/apps-engine': path.resolve('../../packages/apps-engine/src'),
+				'@rocket.chat/apps/dist': path.resolve('../../packages/apps/src'),
 				'@rocket.chat/base64': path.resolve('../../packages/base64/src/base64.ts'),
 				'@rocket.chat/core-typings': path.resolve('../../packages/core-typings/src/index.ts'),
+				'@rocket.chat/ddp-client': path.resolve('../../packages/ddp-client/src/index.ts'),
 				'@rocket.chat/favicon': path.resolve('../../packages/favicon/src/index.ts'),
 				'@rocket.chat/fuselage-ui-kit': path.resolve('../../packages/fuselage-ui-kit/src/index.ts'),
 				'@rocket.chat/gazzodown': path.resolve('../../packages/gazzodown/src/index.ts'),
