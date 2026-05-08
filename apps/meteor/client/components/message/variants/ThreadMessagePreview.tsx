@@ -131,7 +131,7 @@ const ThreadMessagePreview = ({ message, showUserAvatar, sequential, ...props }:
 							t('Message_Ignored')
 						) : (
 							<>
-								<ThreadMessagePreviewBody message={message} />
+								<ThreadMessagePreviewBody message={message} maxMarkdownParseLength={maxMarkdownParseLength} />
 								{translated && (
 									<>
 										{' '}

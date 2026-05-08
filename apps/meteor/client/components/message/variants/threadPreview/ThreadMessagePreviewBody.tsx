@@ -10,11 +10,13 @@ import GazzodownText from '../../../GazzodownText';
 
 type ThreadMessagePreviewBodyProps = {
 	message: IMessage;
+	maxMarkdownParseLength?: number;
 };
 
-const ThreadMessagePreviewBody = ({ message }: ThreadMessagePreviewBodyProps): ReactElement => {
+const ThreadMessagePreviewBody = ({ message, maxMarkdownParseLength = Infinity }: ThreadMessagePreviewBodyProps): ReactElement => {
 	const { t } = useTranslation();
 	const isEncryptedMessage = isE2EEMessage(message);
+	const exceedsLimit = typeof message.msg === 'string' && message.msg.length > maxMarkdownParseLength;
 
 	const getMessage = () => {
 		const mdTokens: Root | undefined = message.md && [...message.md];
@@ -30,7 +32,7 @@ const ThreadMessagePreviewBody = ({ message }: ThreadMessagePreviewBodyProps): R
 			return <>{t('Message_with_attachment')}</>;
 		}
 		if (!isEncryptedMessage || message.e2e === 'done') {
-			return mdTokens?.length ? (
+			return !exceedsLimit && mdTokens?.length ? (
 				<GazzodownText>
 					<PreviewMarkup tokens={mdTokens} />
 				</GazzodownText>
