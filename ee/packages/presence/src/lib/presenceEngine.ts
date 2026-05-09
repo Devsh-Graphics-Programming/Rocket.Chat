@@ -165,10 +165,10 @@ export function processPresence(
 	const statusDefault = set.statusDefault ?? user.statusDefault ?? UserStatus.ONLINE;
 	const clear = unset.length ? unset : undefined;
 
-	// users without DDP sessions (bots, REST-only) have no connection to override the claim,
-	// so the intended status is used directly as the display status
+	// users without DDP sessions still go through computeStatus so that
+	// offline connection precedence is respected (e.g. after claim expiration)
 	if (!sessions.length) {
-		return { values: { ...set, status: statusDefault, statusConnection: UserStatus.OFFLINE }, clear };
+		return { values: { ...set, status: computeStatus(UserStatus.OFFLINE, statusDefault), statusConnection: UserStatus.OFFLINE }, clear };
 	}
 
 	const statusConnection = sessions.map((s) => s.status).reduce(reduceConnections, UserStatus.OFFLINE);

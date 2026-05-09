@@ -273,7 +273,9 @@ describe('processPresence', () => {
 				newState: { statusDefault: UserStatus.BUSY, statusSource: 'manual', statusText: 'Working' },
 			});
 			expect(result.values.statusSource).toBe('manual');
-			expect(result.values.status).toBe(UserStatus.BUSY);
+			// display status is OFFLINE because there is no active connection;
+			// statusDefault (BUSY) is persisted and will take effect on reconnect
+			expect(result.values.status).toBe(UserStatus.OFFLINE);
 			expect(result.values.statusConnection).toBe(UserStatus.OFFLINE);
 		});
 	});
