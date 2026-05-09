@@ -112,10 +112,11 @@ export class Presence extends ServiceClass implements IPresence {
 			return;
 		}
 
-		await Promise.allSettled(expiredUsers.map(({ _id }) => this.endActiveState(_id)));
+		const results = await Promise.allSettled(expiredUsers.map(({ _id }) => this.endActiveState(_id)));
+		const successful = results.filter((result) => result.status === 'fulfilled').length;
 
-		if (expiredUsers.length === batchSize) {
-			return this.processExpiredStatuses(batchSize);
+		if (expiredUsers.length === batchSize && successful > 0) {
+			return this.processExpiredStatuses();
 		}
 	}
 
