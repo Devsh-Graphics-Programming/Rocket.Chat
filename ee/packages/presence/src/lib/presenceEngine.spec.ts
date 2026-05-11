@@ -160,7 +160,7 @@ describe('processPresence', () => {
 				[session()],
 				{ type: 'setActive', newState: { statusDefault: UserStatus.BUSY, statusText: 'Standup', statusSource: 'external' } },
 			);
-			expect(result.values).toMatchObject({});
+			expect(result.values).toStrictEqual({});
 		});
 
 		test('should apply higher priority over external and save external as previousState', () => {
@@ -264,7 +264,7 @@ describe('processPresence', () => {
 				type: 'setActive',
 				newState: { statusDefault: UserStatus.BUSY, statusSource: 'external' },
 			});
-			expect(result.values).toMatchObject({});
+			expect(result.values).toStrictEqual({});
 		});
 
 		test('should accept manual claim when user is offline', () => {
