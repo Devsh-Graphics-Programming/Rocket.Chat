@@ -165,10 +165,12 @@ export function processPresence(
 	const statusDefault = set.statusDefault ?? user.statusDefault ?? UserStatus.ONLINE;
 	const clear = unset.length ? unset : undefined;
 
-	// users without DDP sessions still go through computeStatus so that
-	// offline connection precedence is respected (e.g. after claim expiration)
+	// setActive with no DDP sessions: user is disconnected but holding a claim — persist
+	// it for reconnect but display OFFLINE. Other types (clearActive/endActive) use
+	// statusDefault so REST-only callers and bots can appear online.
 	if (!sessions.length) {
-		return { values: { ...set, status: computeStatus(UserStatus.OFFLINE, statusDefault), statusConnection: UserStatus.OFFLINE }, clear };
+		const status = claimUpdate.type === 'setActive' ? UserStatus.OFFLINE : statusDefault;
+		return { values: { ...set, status, statusConnection: UserStatus.OFFLINE }, clear };
 	}
 
 	const statusConnection = sessions.map((s) => s.status).reduce(reduceConnections, UserStatus.OFFLINE);
