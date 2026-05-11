@@ -79,7 +79,7 @@ describe('Presence class', () => {
 			expect(updatePresenceMock).not.toHaveBeenCalled();
 		});
 
-		it('should keep claimed status when user has no sessions', async () => {
+		it('should store claim but show offline status when user has no sessions', async () => {
 			findUserMock.mockResolvedValue(user({ statusDefault: UserStatus.ONLINE }));
 			withNoSessions();
 
@@ -91,7 +91,7 @@ describe('Presence class', () => {
 
 			expect(updatePresenceMock).toHaveBeenCalledWith(
 				'u1',
-				expect.objectContaining({ status: UserStatus.BUSY, statusConnection: UserStatus.OFFLINE }),
+				expect.objectContaining({ status: UserStatus.OFFLINE, statusConnection: UserStatus.OFFLINE, statusDefault: UserStatus.BUSY }),
 				expect.any(Array),
 			);
 		});
