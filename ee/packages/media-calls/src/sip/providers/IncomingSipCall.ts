@@ -439,15 +439,39 @@ export class IncomingSipCall extends BaseSipCall {
 		throw new SipError(SipErrorCodes.NOT_FOUND);
 	}
 
+	private static getDisplayNameFromInvite(req: SrfRequest): string | undefined {
+		const removeQuotes = (str: string): string => str.replace(/^"|"$/g, '').trim();
+
+		if (req.has('X-RocketChat-Caller-Name')) {
+			const headerValue = req.get('X-RocketChat-Caller-Name');
+			if (headerValue) {
+				return removeQuotes(headerValue);
+			}
+		}
+
+		if (req.has('p-asserted-identity')) {
+			const pAssertedIdentity = req.getParsedHeader('p-asserted-identity');
+			if (pAssertedIdentity?.name) {
+				return removeQuotes(pAssertedIdentity.name);
+			}
+		}
+
+		if (req.has('from')) {
+			const fromHeader = req.getParsedHeader('from');
+			if (fromHeader?.name) {
+				return removeQuotes(fromHeader.name);
+			}
+		}
+
+		return undefined;
+	}
+
 	private static async getCallerContactFromInvite(sessionId: string, req: SrfRequest): Promise<MediaCallSignedContact<'sip'>> {
 		logger.debug({ msg: 'IncomingSipCall.getCallerContactFromInvite' });
 
-		const displayNameFromHeader = req.has('X-RocketChat-Caller-Name') && req.get('X-RocketChat-Caller-Name');
+		const displayName = this.getDisplayNameFromInvite(req);
 		const usernameFromHeader = req.has('X-RocketChat-Caller-Username') && req.get('X-RocketChat-Caller-Username');
-
-		const displayName = displayNameFromHeader || req.from;
 		const username = usernameFromHeader || req.callingNumber;
-
 		const sipExtension = req.callingNumber;
 
 		const defaultContactInfo: MediaCallContactInformation = {
