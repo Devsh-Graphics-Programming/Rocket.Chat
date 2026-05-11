@@ -98,6 +98,7 @@ const EditStatusModal = ({ onClose, userStatus, userStatusText }: EditStatusModa
 	const [duration, setDuration] = useState('');
 	const [customDate, setCustomDate] = useState(() => new Date().toLocaleDateString('en-CA'));
 	const [customTime, setCustomTime] = useState(() => new Date().toTimeString().slice(0, 5));
+	const minCustomDate = useMemo(() => new Date().toLocaleDateString('en-CA'), []);
 
 	const setUserStatus = useEndpoint('POST', '/v1/users.setStatus');
 	const formatTime = useFormatTime();
@@ -123,9 +124,13 @@ const EditStatusModal = ({ onClose, userStatus, userStatusText }: EditStatusModa
 
 	const computeExpiresAt = useCallback((): Date | undefined => {
 		if (duration === 'custom') {
+			if (!customDate || !customTime) {
+				return undefined;
+			}
 			const [year, month, day] = customDate.split('-').map(Number);
 			const [hours, mins] = customTime.split(':').map(Number);
-			return new Date(year, month - 1, day, hours, mins, 0, 0);
+			const parsedDate = new Date(year, month - 1, day, hours, mins, 0, 0);
+			return Number.isNaN(parsedDate.getTime()) ? undefined : parsedDate;
 		}
 
 		const option = DURATION_OPTIONS.find((o) => o.value === duration);
@@ -143,6 +148,10 @@ const EditStatusModal = ({ onClose, userStatus, userStatusText }: EditStatusModa
 	const handleSaveStatus = useCallback(async () => {
 		try {
 			const expiresAt = computeExpiresAt();
+			if (duration === 'custom' && !expiresAt) {
+				dispatchToastMessage({ type: 'error', message: t('Status_choose_date_and_time') });
+				return;
+			}
 			await setUserStatus({
 				message: statusText,
 				status: statusType as UserStatusType,
@@ -155,7 +164,7 @@ const EditStatusModal = ({ onClose, userStatus, userStatusText }: EditStatusModa
 		}
 
 		onClose();
-	}, [onClose, setUserStatus, statusText, statusType, computeExpiresAt, setCustomStatus, dispatchToastMessage, t]);
+	}, [onClose, setUserStatus, statusText, statusType, computeExpiresAt, setCustomStatus, dispatchToastMessage, t, duration]);
 
 	return (
 		<Modal
@@ -234,7 +243,7 @@ const EditStatusModal = ({ onClose, userStatus, userStatusText }: EditStatusModa
 										flexGrow={1}
 										value={customDate}
 										onChange={(e: ChangeEvent<HTMLInputElement>) => setCustomDate(e.currentTarget.value)}
-										min={customDate}
+										min={minCustomDate}
 									/>
 									<InputBox
 										aria-label='Expiration time'

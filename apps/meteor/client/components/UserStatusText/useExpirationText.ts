@@ -15,7 +15,8 @@ export function parseExpiresAt(value?: unknown): Date | undefined {
 	}
 
 	if (typeof value === 'object' && '$date' in (value as Record<string, unknown>)) {
-		return new Date((value as { $date: number }).$date);
+		const date = new Date((value as { $date: number }).$date);
+		return Number.isNaN(date.getTime()) ? undefined : date;
 	}
 
 	if (typeof value === 'string') {

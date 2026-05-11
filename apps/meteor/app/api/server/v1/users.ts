@@ -649,7 +649,7 @@ API.v1.addRoute(
 				if (!canViewFullOtherUserInfo) {
 					return API.v1.forbidden();
 				}
-				const escapedEmail = escapeRegExp(this.queryParams.email as string);
+				const escapedEmail = escapeRegExp(this.queryParams.email);
 				nonEmptyQuery['emails.address'] = {
 					$regex: `^${escapedEmail}$`,
 					$options: 'i',
@@ -2002,7 +2002,16 @@ API.v1
 						statusDefault: status,
 						statusSource: 'manual',
 						...(this.bodyParams.message != null && { statusText: this.bodyParams.message }),
-						...(this.bodyParams.expiresAt && { statusExpiresAt: new Date(this.bodyParams.expiresAt) }),
+						...(this.bodyParams.expiresAt &&
+							(() => {
+								const date = new Date(this.bodyParams.expiresAt);
+								if (isNaN(date.getTime())) {
+									throw new Meteor.Error('error-invalid-date', 'Invalid expiresAt date string', {
+										method: 'users.setStatus',
+									});
+								}
+								return { statusExpiresAt: date };
+							})()),
 					});
 				}
 

@@ -168,6 +168,7 @@ const keys: (keyof RoomListRowProps)[] = [
 	't',
 	'sidebarViewMode',
 	'videoConfActions',
+	'userId',
 ];
 
 export default memo(SidebarItemTemplateWithData, (prevProps, nextProps) => {
