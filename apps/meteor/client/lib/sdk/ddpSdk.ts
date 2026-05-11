@@ -5,7 +5,7 @@ import { Meteor } from 'meteor/meteor';
 
 import { createMeteorBackedSdk } from './meteorBackedSdk';
 import { isSdkTransportEnabled } from './sdkTransportEnabled';
-import { STORAGE_KEYS, getStoredItem } from './storage';
+import { STORAGE_KEYS, getStoredItem, removeStoredItem } from './storage';
 import { userIdStore } from '../user';
 
 const sdkTransportEnabled = isSdkTransportEnabled();
@@ -142,8 +142,10 @@ export const ensureConnectedAndAuthenticated = async (): Promise<void> => {
 			// latter dispatches a `logout` method which itself races against
 			// parallel re-auth flows in CI's parallel-shard environment and
 			// kicked otherwise-healthy tests out.
-			Accounts._unstoreLoginToken();
-			Meteor.connection.setUserId(null);
+			removeStoredItem(STORAGE_KEYS.USER_ID);
+			removeStoredItem(STORAGE_KEYS.LOGIN_TOKEN);
+			removeStoredItem(STORAGE_KEYS.LOGIN_TOKEN_EXPIRES);
+			(Meteor.connection as unknown as { setUserId: (uid: string | null) => void }).setUserId(null);
 			return;
 		}
 		console.warn('[ddpSdk] loginWithToken failed', error);
