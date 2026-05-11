@@ -1098,7 +1098,10 @@ export class UsersRaw extends BaseRaw<IUser, DefaultFields<IUser>> implements IU
 	}
 
 	findExpiredStatuses(limit: number) {
-		return this.find<Pick<IUser, '_id'>>({ statusExpiresAt: { $lt: new Date() } }, { projection: { _id: 1 }, limit });
+		return this.find<Pick<IUser, '_id'>>(
+			{ statusExpiresAt: { $lt: new Date() } },
+			{ projection: { _id: 1 }, sort: { statusExpiresAt: 1 }, limit },
+		);
 	}
 
 	updatePresenceAndStatus(userId: IUser['_id'], values: Record<string, unknown>, clear?: string[]) {
