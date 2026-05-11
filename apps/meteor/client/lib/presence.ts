@@ -75,9 +75,12 @@ const getPresence = ((): ((uid: UserPresence['_id']) => void) => {
 
 				const fallbackStatus = status === 'disabled' ? UserStatus.DISABLED : UserStatus.OFFLINE;
 
-				users.forEach((user) => {
+				users.forEach(({ statusExpiresAt, ...user }) => {
 					if (!store.has(user._id)) {
-						notify(user);
+						notify({
+							...user,
+							...(statusExpiresAt && { statusExpiresAt: new Date(statusExpiresAt) }),
+						});
 					}
 					currentUids.delete(user._id);
 				});

@@ -1,3 +1,4 @@
+import type { PresenceSource } from '@rocket.chat/core-typings';
 import { UserStatus } from '@rocket.chat/core-typings';
 import { Meteor } from 'meteor/meteor';
 
@@ -9,10 +10,17 @@ import { streamerCentral } from '../../../../client/lib/streamer';
 
 streamerCentral.getStreamer('user-presence', { ddpConnection: Meteor.connection });
 
-type args = [username: string, statusChanged?: UserStatus, statusText?: string];
+type args = [username: string, statusChanged?: UserStatus, statusText?: string, statusSource?: PresenceSource, statusExpiresAt?: Date];
 
 export const STATUS_MAP = [UserStatus.OFFLINE, UserStatus.ONLINE, UserStatus.AWAY, UserStatus.BUSY, UserStatus.DISABLED];
 
-streamerCentral.on('stream-user-presence', (uid: string, [username, statusChanged, statusText]: args) => {
-	Presence.notify({ _id: uid, username, status: STATUS_MAP[statusChanged as any], statusText });
+streamerCentral.on('stream-user-presence', (uid: string, [username, statusChanged, statusText, statusSource, statusExpiresAt]: args) => {
+	Presence.notify({
+		_id: uid,
+		username,
+		status: STATUS_MAP[statusChanged as any],
+		statusText,
+		statusSource,
+		statusExpiresAt,
+	});
 });

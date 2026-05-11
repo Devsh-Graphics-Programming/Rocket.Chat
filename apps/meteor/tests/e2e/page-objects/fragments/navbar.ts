@@ -244,6 +244,26 @@ export class Navbar {
 		await this.modals.editStatus.changeStatusMessage(text);
 	}
 
+	get editStatusModal(): EditStatusModal {
+		return this.modals.editStatus;
+	}
+
+	async openEditStatusModal(): Promise<void> {
+		await this.btnUserMenu.click();
+		await this.getUserProfileMenuOption('Custom Status').click();
+	}
+
+	async changeUserCustomStatusWithExpiration(options: {
+		message?: string;
+		statusType?: string;
+		duration: string;
+		customDate?: string;
+		customTime?: string;
+	}): Promise<void> {
+		await this.openEditStatusModal();
+		await this.modals.editStatus.setStatusWithExpiration(options);
+	}
+
 	async switchOmnichannelStatus(status: 'offline' | 'online') {
 		// button has a id of "omnichannel-status-toggle"
 		const toggleButton = this.btnSwitchOmnichannelStatus;

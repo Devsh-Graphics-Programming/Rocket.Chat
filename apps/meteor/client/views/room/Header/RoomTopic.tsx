@@ -1,9 +1,11 @@
 import type { IRoom } from '@rocket.chat/core-typings';
 import { isDirectMessageRoom, isPrivateRoom, isPublicRoom, isTeamRoom } from '@rocket.chat/core-typings';
 import { Box } from '@rocket.chat/fuselage';
-import { useUserId, useTranslation, useRouter, useUserPresence } from '@rocket.chat/ui-contexts';
+import { useUserId, useRouter, useUserPresence } from '@rocket.chat/ui-contexts';
+import { useTranslation } from 'react-i18next';
 
 import MarkdownText from '../../../components/MarkdownText';
+import { UserStatusText } from '../../../components/UserStatusText';
 import { useCanEditRoom } from '../contextualBar/Info/hooks/useCanEditRoom';
 
 type RoomTopicProps = {
@@ -11,17 +13,18 @@ type RoomTopicProps = {
 };
 
 const RoomTopic = ({ room }: RoomTopicProps) => {
-	const t = useTranslation();
+	const { t } = useTranslation();
 	const canEdit = useCanEditRoom(room);
 	const userId = useUserId();
-	const directUserId = room.uids?.filter((uid) => uid !== userId).shift();
+	const directUserId = room.uids?.filter((uid) => uid !== userId).shift() ?? (room.uids?.length === 1 ? userId : undefined);
 	const directUserData = useUserPresence(directUserId);
 	const router = useRouter();
 
 	const currentRoute = router.getLocationPathname();
 	const href = isTeamRoom(room) ? `${currentRoute}/team-info` : `${currentRoute}/channel-settings`;
 
-	const topic = isDirectMessageRoom(room) && (room.uids?.length ?? 0) < 3 ? directUserData?.statusText : room.topic;
+	const isDirect = isDirectMessageRoom(room) && (room.uids?.length ?? 0) < 3;
+	const topic = isDirect ? directUserData?.statusText : room.topic;
 	const canEditTopic = canEdit && (isPublicRoom(room) || isPrivateRoom(room));
 
 	if (!topic && !canEditTopic) {
@@ -34,6 +37,10 @@ const RoomTopic = ({ room }: RoomTopicProps) => {
 				{t('Add_topic')}
 			</Box>
 		);
+	}
+
+	if (isDirect) {
+		return <UserStatusText statusText={topic} statusExpiresAt={directUserData?.statusExpiresAt} showExpiration={false} />;
 	}
 
 	return <MarkdownText color='default' parseEmoji={true} variant='inlineWithoutBreaks' withTruncatedText content={topic} />;

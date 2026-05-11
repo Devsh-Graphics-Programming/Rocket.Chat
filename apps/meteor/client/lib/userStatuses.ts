@@ -14,7 +14,7 @@ export class UserStatuses implements Iterable<UserStatusDescriptor> {
 	public invisibleAllowed = true;
 
 	private store: Map<UserStatusDescriptor['id'], UserStatusDescriptor> = new Map(
-		[UserStatus.ONLINE, UserStatus.AWAY, UserStatus.BUSY, UserStatus.OFFLINE].map((status) => [
+		[UserStatus.ONLINE, UserStatus.BUSY, UserStatus.OFFLINE].map((status) => [
 			status,
 			{
 				id: status,

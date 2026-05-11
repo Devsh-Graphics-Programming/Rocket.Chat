@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import LocalTime from '../../../components/LocalTime';
 import { UserCard, UserCardAction, UserCardRole, UserCardSkeleton } from '../../../components/UserCard';
 import { ReactiveUserStatus } from '../../../components/UserStatus';
+import { UserStatusText } from '../../../components/UserStatusText';
 import { useUserInfoQuery } from '../../../hooks/useUserInfoQuery';
 import { useMemberExists } from '../../hooks/useMemberExists';
 import { useUserInfoActions } from '../hooks/useUserInfoActions';
@@ -45,7 +46,8 @@ const UserCardWithData = ({ username, rid, onOpenUserInfo, onClose }: UserCardWi
 			_id,
 			name,
 			roles = defaultValue,
-			statusText = defaultValue,
+			statusText,
+			statusExpiresAt,
 			bio = defaultValue,
 			utcOffset = defaultValue,
 			nickname,
@@ -62,7 +64,7 @@ const UserCardWithData = ({ username, rid, onOpenUserInfo, onClose }: UserCardWi
 			etag: avatarETag,
 			localTime: utcOffset && Number.isInteger(utcOffset) && <LocalTime utcOffset={utcOffset} />,
 			status: _id && <ReactiveUserStatus uid={_id} />,
-			customStatus: statusText,
+			customStatus: <UserStatusText statusText={statusText} statusExpiresAt={statusExpiresAt} showExpiration />,
 			nickname,
 			freeSwitchExtension,
 		};

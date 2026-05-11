@@ -12,6 +12,7 @@ import {
 } from '@rocket.chat/fuselage';
 import { usePrefersReducedMotion } from '@rocket.chat/fuselage-hooks';
 import { UserAvatar } from '@rocket.chat/ui-avatar';
+import { useUserPresence } from '@rocket.chat/ui-contexts';
 import type { ReactElement, MouseEvent } from 'react';
 import { useState } from 'react';
 
@@ -19,6 +20,7 @@ import UserActions from './RoomMembersActions';
 import { getUserDisplayNames } from '../../../../../lib/getUserDisplayNames';
 import InvitationBadge from '../../../../components/InvitationBadge';
 import { ReactiveUserStatus } from '../../../../components/UserStatus';
+import { useStatusTooltip } from '../../../../components/UserStatusText';
 import { usePreventPropagation } from '../../../../hooks/usePreventPropagation';
 import type { RoomMember } from '../../../hooks/useMembersList';
 
@@ -50,8 +52,10 @@ const RoomMembersItem = ({
 	};
 
 	const preventPropagation = usePreventPropagation();
-
 	const [nameOrUsername, displayUsername] = getUserDisplayNames(name, username, useRealName);
+
+	const presenceData = useUserPresence(_id);
+	const { handleMouseEnter, handleMouseLeave } = useStatusTooltip(presenceData?.statusText, presenceData?.statusExpiresAt);
 
 	return (
 		<Option
@@ -59,6 +63,8 @@ const RoomMembersItem = ({
 			data-userid={_id}
 			data-invitationdate={invitationDate}
 			onClick={onClickView}
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={handleMouseLeave}
 			style={{ paddingInline: 24 }}
 			{...handleMenuEvent}
 		>

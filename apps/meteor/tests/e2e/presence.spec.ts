@@ -74,4 +74,49 @@ test.describe.serial('Presence', () => {
 			});
 		});
 	});
+
+	test.describe('Status expiration', () => {
+		test.use({ storageState: Users.admin.state });
+
+		test('should toggle custom date/time inputs when selecting duration', async () => {
+			await poHomeChannel.navbar.openEditStatusModal();
+
+			const { editStatusModal } = poHomeChannel.navbar;
+
+			await editStatusModal.selectDuration('Choose date and time');
+			await expect(editStatusModal.customDateInput).toBeVisible();
+			await expect(editStatusModal.customTimeInput).toBeVisible();
+
+			await editStatusModal.selectDuration("Don't clear");
+			await expect(editStatusModal.customDateInput).not.toBeVisible();
+			await expect(editStatusModal.customTimeInput).not.toBeVisible();
+
+			await editStatusModal.close();
+		});
+
+		test('should set status with expiration, show it, and clear it', async ({ page }) => {
+			await test.step('set busy status with 30-minute expiration', async () => {
+				await poHomeChannel.navbar.changeUserCustomStatusWithExpiration({
+					message: 'focus time',
+					statusType: 'Busy',
+					duration: '30 minutes',
+				});
+			});
+
+			await test.step('verify expiration is displayed in user menu', async () => {
+				await poHomeChannel.navbar.btnUserMenu.click();
+				await expect(poHomeChannel.navbar.userMenu).toContainText('focus time');
+				await expect(poHomeChannel.navbar.userMenu).toContainText('Until');
+				await page.keyboard.press('Escape');
+			});
+
+			await test.step('clear status and verify expiration is removed', async () => {
+				await poHomeChannel.navbar.changeUserCustomStatus('');
+
+				await poHomeChannel.navbar.btnUserMenu.click();
+				await expect(poHomeChannel.navbar.userMenu).not.toContainText('Until');
+				await expect(poHomeChannel.navbar.userMenu).not.toContainText('focus time');
+			});
+		});
+	});
 });

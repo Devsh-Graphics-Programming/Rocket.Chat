@@ -5,8 +5,8 @@ import { useUserDisplayName } from '@rocket.chat/ui-client';
 import { useSetting } from '@rocket.chat/ui-contexts';
 import { useTranslation } from 'react-i18next';
 
-import MarkdownText from '../../../components/MarkdownText';
 import { UserStatus } from '../../../components/UserStatus';
+import { UserStatusText } from '../../../components/UserStatusText';
 
 type UserMenuHeaderProps = { user: IUser };
 
@@ -30,11 +30,10 @@ const UserMenuHeader = ({ user }: UserMenuHeaderProps) => {
 					</Margins>
 				</Box>
 				<Box color='hint'>
-					<MarkdownText
-						withTruncatedText
-						parseEmoji={true}
-						content={user?.statusText || t(user?.status ?? 'offline')}
-						variant='inlineWithoutBreaks'
+					<UserStatusText
+						statusText={user.statusText || t(user.status ?? 'offline')}
+						statusExpiresAt={user.statusExpiresAt}
+						showExpiration
 					/>
 				</Box>
 			</Box>

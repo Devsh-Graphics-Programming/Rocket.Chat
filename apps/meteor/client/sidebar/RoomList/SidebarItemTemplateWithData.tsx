@@ -1,12 +1,13 @@
 import { isOmnichannelRoom } from '@rocket.chat/core-typings';
 import { SidebarV2Action, SidebarV2Actions, SidebarV2ItemIcon } from '@rocket.chat/fuselage';
 import type { SubscriptionWithRoom } from '@rocket.chat/ui-contexts';
-import { useLayout } from '@rocket.chat/ui-contexts';
+import { useLayout, useUserPresence } from '@rocket.chat/ui-contexts';
 import type { TFunction } from 'i18next';
 import type { AllHTMLAttributes, ComponentType, ReactElement, ReactNode } from 'react';
 import { memo, useMemo } from 'react';
 
 import { RoomIcon } from '../../components/RoomIcon';
+import { useStatusTooltip } from '../../components/UserStatusText';
 import { roomCoordinator } from '../../lib/rooms/roomCoordinator';
 import { isIOsDevice } from '../../lib/utils/isIOsDevice';
 import { getMessagePreview } from '../../lib/utils/normalizeMessagePreview/getMessagePreview';
@@ -42,6 +43,7 @@ type RoomListRowProps = {
 	openedRoom?: string;
 	// sidebarViewMode: 'extended';
 	isAnonymous?: boolean;
+	userId?: string;
 
 	room: SubscriptionWithRoom;
 	id?: string;
@@ -67,8 +69,12 @@ const SidebarItemTemplateWithData = ({
 	t,
 	isAnonymous,
 	videoConfActions,
+	userId,
 }: RoomListRowProps) => {
 	const { sidebar } = useLayout();
+	const dmUserId = room.t === 'd' ? (room.uids?.find((uid) => uid !== userId) ?? userId) : undefined;
+	const dmPresence = useUserPresence(dmUserId);
+	const { handleMouseEnter, handleMouseLeave } = useStatusTooltip(dmPresence?.statusText, dmPresence?.statusExpiresAt);
 
 	const href = roomCoordinator.getRouteLink(room.t, room) || '';
 	const title = roomCoordinator.getRoomName(room.t, room) || '';
@@ -115,6 +121,8 @@ const SidebarItemTemplateWithData = ({
 			}}
 			aria-label={showUnread ? t('__unreadTitle__from__roomTitle__', { unreadTitle, roomTitle: title }) : title}
 			title={title}
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={handleMouseLeave}
 			time={lastMessage?.ts}
 			subtitle={subtitle}
 			icon={icon}
@@ -162,7 +170,6 @@ const keys: (keyof RoomListRowProps)[] = [
 	'videoConfActions',
 ];
 
-// eslint-disable-next-line react/no-multi-comp
 export default memo(SidebarItemTemplateWithData, (prevProps, nextProps) => {
 	if (keys.some((key) => prevProps[key] !== nextProps[key])) {
 		return false;
