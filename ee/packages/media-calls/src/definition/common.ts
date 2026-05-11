@@ -6,6 +6,7 @@ export type MinimalUserData = Pick<IUser, '_id' | 'username' | 'name' | 'freeSwi
 export type GetActorContactOptions = {
 	requiredType?: MediaCallActorType;
 	preferredType?: MediaCallActorType;
+	allowIdentityLookup?: boolean;
 };
 
 export type InternalCallParams = {
