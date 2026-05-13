@@ -1,5 +1,5 @@
 import type { IRoom } from '@rocket.chat/core-typings';
-import { Skeleton } from '@rocket.chat/fuselage';
+import { Divider, Skeleton } from '@rocket.chat/fuselage';
 import { useEffectEvent } from '@rocket.chat/fuselage-hooks';
 import { useEndpoint } from '@rocket.chat/ui-contexts';
 import {
@@ -29,9 +29,10 @@ type IncomingPopupProps = {
 	onClose: (id: string) => void;
 	onMute: (id: string) => void;
 	onConfirm: () => void;
+	appButtons?: { label: string; variant?: 'danger'; onClick: () => void }[];
 };
 
-const IncomingPopup = ({ id, room, position, onClose, onMute, onConfirm }: IncomingPopupProps): ReactElement => {
+const IncomingPopup = ({ id, room, position, onClose, onMute, onConfirm, appButtons = [] }: IncomingPopupProps): ReactElement => {
 	const { t } = useTranslation();
 	const { controllersConfig, handleToggleMic, handleToggleCam } = useVideoConfControllers();
 	const setPreferences = useVideoConfSetPreferences();
@@ -81,6 +82,18 @@ const IncomingPopup = ({ id, room, position, onClose, onMute, onConfirm }: Incom
 				<VideoConfPopupRoomInfo room={room} />
 			</VideoConfPopupContent>
 			<VideoConfPopupFooter>
+				{appButtons.length > 0 && (
+					<>
+						<VideoConfPopupFooterButtons>
+							{appButtons.map((btn) => (
+								<VideoConfButton key={btn.label} danger={btn.variant === 'danger'} secondary={!btn.variant} onClick={btn.onClick}>
+									{btn.label}
+								</VideoConfButton>
+							))}
+						</VideoConfPopupFooterButtons>
+						<Divider />
+					</>
+				)}
 				<VideoConfPopupFooterButtons>
 					<VideoConfButton primary onClick={handleJoinCall}>
 						{t('Accept')}

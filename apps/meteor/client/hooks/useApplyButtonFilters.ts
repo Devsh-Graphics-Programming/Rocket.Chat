@@ -27,7 +27,7 @@ const enumToFilter: { [k in RoomTypeFilter]: (room: IRoom) => boolean } = {
 	[RoomTypeFilter.LIVE_CHAT]: isOmnichannelRoom,
 };
 
-const applyRoomFilter = (button: IUIActionButton, room: IRoom): boolean => {
+export const applyRoomFilter = (button: IUIActionButton, room: IRoom): boolean => {
 	const { roomTypes } = button.when || {};
 	return !roomTypes || roomTypes.some((filter): boolean => enumToFilter[filter]?.(room));
 };
