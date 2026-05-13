@@ -1,6 +1,7 @@
 import type {
 	IUIKitActionButtonIncomingInteraction,
 	IUIKitActionButtonMessageBoxIncomingInteraction,
+	IUIKitActionButtonVideoConfPopupIncomingInteraction,
 	IUIKitBaseIncomingInteraction,
 	IUIKitBlockIncomingInteraction,
 	IUIKitViewCloseIncomingInteraction,
@@ -59,7 +60,12 @@ export class UIKitViewCloseInteractionContext extends UIKitInteractionContext {
 }
 
 export class UIKitActionButtonInteractionContext extends UIKitInteractionContext {
-	constructor(private readonly interactionData: IUIKitActionButtonIncomingInteraction | IUIKitActionButtonMessageBoxIncomingInteraction) {
+	constructor(
+		private readonly interactionData:
+			| IUIKitActionButtonIncomingInteraction
+			| IUIKitActionButtonMessageBoxIncomingInteraction
+			| IUIKitActionButtonVideoConfPopupIncomingInteraction,
+	) {
 		super(interactionData);
 	}
 

@@ -28,14 +28,25 @@ export interface IUActionButtonWhen {
 	hasAllRoles?: Array<string>;
 }
 
-export interface IUIActionButtonDescriptor {
+export type VideoConfPopupType = 'incoming' | 'outgoing' | 'start';
+
+type IUIActionButtonDescriptorBase = {
 	actionId: string;
-	context: UIActionButtonContext;
 	labelI18n: string;
 	variant?: 'danger';
-	when?: IUActionButtonWhen;
 	category?: 'default' | 'ai';
-}
-export interface IUIActionButton extends IUIActionButtonDescriptor {
-	appId: string;
-}
+};
+
+type IVideoConfPopupActionButtonDescriptor = IUIActionButtonDescriptorBase & {
+	context: UIActionButtonContext.VIDEO_CONF_POPUP_ACTION;
+	when?: IUActionButtonWhen & { popupTypes?: VideoConfPopupType[] };
+};
+
+type IOtherActionButtonDescriptor = IUIActionButtonDescriptorBase & {
+	context: Exclude<UIActionButtonContext, UIActionButtonContext.VIDEO_CONF_POPUP_ACTION>;
+	when?: IUActionButtonWhen;
+};
+
+export type IUIActionButtonDescriptor = IVideoConfPopupActionButtonDescriptor | IOtherActionButtonDescriptor;
+
+export type IUIActionButton = IUIActionButtonDescriptor & { appId: string };

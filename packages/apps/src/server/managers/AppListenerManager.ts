@@ -23,7 +23,10 @@ import { RoomType } from '@rocket.chat/apps-engine/definition/rooms';
 import { UIActionButtonContext } from '@rocket.chat/apps-engine/definition/ui';
 import type { IUIKitResponse, IUIKitSurface, UIKitIncomingInteraction } from '@rocket.chat/apps-engine/definition/uikit';
 import { UIKitIncomingInteractionType } from '@rocket.chat/apps-engine/definition/uikit';
-import { isUIKitIncomingInteractionActionButtonMessageBox } from '@rocket.chat/apps-engine/definition/uikit/IUIKitIncomingInteractionActionButton';
+import {
+	isUIKitIncomingInteractionActionButtonMessageBox,
+	isUIKitIncomingInteractionActionButtonVideoConfPopup,
+} from '@rocket.chat/apps-engine/definition/uikit/IUIKitIncomingInteractionActionButton';
 import type {
 	IUIKitLivechatBlockIncomingInteraction,
 	IUIKitLivechatIncomingInteraction,
@@ -1026,6 +1029,20 @@ export class AppListenerManager {
 							user,
 							threadId: data.tmid,
 							...('message' in data.payload && { text: data.payload.message }),
+						})
+						.catch(handleError(method));
+				}
+
+				if (isUIKitIncomingInteractionActionButtonVideoConfPopup(data)) {
+					return app
+						.call(method, {
+							appId,
+							actionId,
+							buttonContext: UIActionButtonContext.VIDEO_CONF_POPUP_ACTION,
+							room: data.room,
+							triggerId,
+							user,
+							callId: data.payload.callId,
 						})
 						.catch(handleError(method));
 				}

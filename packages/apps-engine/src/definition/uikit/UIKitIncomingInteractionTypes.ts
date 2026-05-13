@@ -61,3 +61,14 @@ export function isMessageBoxIncomingInteraction(
 ): interaction is IUIKitActionButtonMessageBoxIncomingInteraction {
 	return interaction.buttonContext === UIActionButtonContext.MESSAGE_BOX_ACTION;
 }
+
+export interface IUIKitActionButtonVideoConfPopupIncomingInteraction extends IUIKitActionButtonIncomingInteraction {
+	buttonContext: UIActionButtonContext.VIDEO_CONF_POPUP_ACTION;
+	callId: string;
+}
+
+export function isVideoConfPopupIncomingInteraction(
+	interaction: IUIKitActionButtonIncomingInteraction,
+): interaction is IUIKitActionButtonVideoConfPopupIncomingInteraction {
+	return interaction.buttonContext === UIActionButtonContext.VIDEO_CONF_POPUP_ACTION;
+}

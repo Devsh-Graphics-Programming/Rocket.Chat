@@ -4,4 +4,5 @@ export enum UIActionButtonContext {
 	MESSAGE_BOX_ACTION = 'messageBoxAction',
 	USER_DROPDOWN_ACTION = 'userDropdownAction',
 	ROOM_SIDEBAR_ACTION = 'roomSideBarAction',
+	VIDEO_CONF_POPUP_ACTION = 'videoConfPopupAction',
 }

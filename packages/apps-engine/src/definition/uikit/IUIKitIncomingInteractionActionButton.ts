@@ -70,9 +70,24 @@ interface IUIKitIncomingInteractionActionButtonUserDropdown extends IUIKitIncomi
 	};
 }
 
+interface IUIKitIncomingInteractionActionButtonVideoConfPopup extends IUIKitIncomingInteractionActionButtonBase {
+	room: IRoom;
+	payload: {
+		context: 'videoConfPopupAction';
+		callId: string;
+	};
+}
+
+export const isUIKitIncomingInteractionActionButtonVideoConfPopup = (
+	interaction: IUIKitIncomingInteractionActionButtonBase,
+): interaction is IUIKitIncomingInteractionActionButtonVideoConfPopup => {
+	return interaction.payload.context === 'videoConfPopupAction';
+};
+
 export type IUIKitIncomingInteractionActionButton =
 	| IUIKitIncomingInteractionActionButtonMessageBox
 	| IUIKitIncomingInteractionActionButtonMessage
 	| IUIKitIncomingInteractionActionButtonRoomSidebar
 	| IUIKitIncomingInteractionActionButtonRoom
-	| IUIKitIncomingInteractionActionButtonUserDropdown;
+	| IUIKitIncomingInteractionActionButtonUserDropdown
+	| IUIKitIncomingInteractionActionButtonVideoConfPopup;
