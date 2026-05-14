@@ -90,39 +90,29 @@ export class MediaCallCastDirector implements IMediaCallCastDirector {
 		options: GetActorContactOptions,
 		defaultContactInfo?: MediaCallContactInformation,
 	): Promise<MediaCallContact | null> {
-		const user = await this.findUserBySipIdentifier(sipExtension, options);
+		const user = await Users.findOneByFreeSwitchExtension<Pick<IUser, '_id' | 'name' | 'username' | 'freeSwitchExtension'>>(sipExtension, {
+			projection: { name: 1, username: 1, freeSwitchExtension: 1 },
+		});
 
 		const list = user
 			? this.buildContactListForUser(user, defaultContactInfo)
-			: this.buildContactListForExtension(sipExtension, defaultContactInfo);
+			: await this.buildContactListForExtension(sipExtension, defaultContactInfo);
 
 		return this.getContactFromList(list, options);
 	}
 
-	private async findUserBySipIdentifier(
+	private async findUserByIndentityLookup(
 		sipIdentifier: string,
-		options: GetActorContactOptions,
 	): Promise<Pick<IUser, '_id' | 'name' | 'username' | 'freeSwitchExtension'> | null> {
-		const projection = { name: 1, username: 1, freeSwitchExtension: 1 } as const;
-
-		const userByExtension = await Users.findOneByFreeSwitchExtension<Pick<IUser, '_id' | 'name' | 'username' | 'freeSwitchExtension'>>(
-			sipIdentifier,
-			{ projection },
-		);
-
-		if (userByExtension) {
-			return userByExtension;
-		}
-
 		const { identityLookup } = this.settings;
-		if (!options.allowIdentityLookup || !identityLookup.enabled || !identityLookup.customFieldName) {
+		if (!identityLookup.enabled || !identityLookup.customFieldName) {
 			return null;
 		}
 
 		return Users.findOneByCustomFieldValue<Pick<IUser, '_id' | 'name' | 'username' | 'freeSwitchExtension'>>(
 			identityLookup.customFieldName,
 			sipIdentifier,
-			{ projection },
+			{ projection: { name: 1, username: 1, freeSwitchExtension: 1 } },
 		);
 	}
 
@@ -173,10 +163,17 @@ export class MediaCallCastDirector implements IMediaCallCastDirector {
 		};
 	}
 
-	protected buildContactListForExtension(sipExtension: string, defaultContactInfo?: MediaCallContactInformation): ContactList {
+	protected async buildContactListForExtension(
+		sipExtension: string,
+		defaultContactInfo?: MediaCallContactInformation,
+	): Promise<ContactList> {
+		const user = await this.findUserByIndentityLookup(sipExtension);
+
 		const data: Partial<MediaCallContact> = {
 			...defaultContactInfo,
 			...(sipExtension && { sipExtension }),
+			...(user?.username && { username: user.username }),
+			...(user?.name && { displayName: user.name }),
 		};
 
 		return {
