@@ -440,26 +440,26 @@ export class IncomingSipCall extends BaseSipCall {
 	}
 
 	private static getDisplayNameFromInvite(req: SrfRequest): string | undefined {
-		const removeQuotes = (str: string): string => str.replace(/^"|"$/g, '').trim();
+		const removeQuotes = (str?: string): string | undefined => str?.replace(/^"|"$/g, '').trim();
 
 		if (req.has('X-RocketChat-Caller-Name')) {
 			const headerValue = req.get('X-RocketChat-Caller-Name');
 			if (headerValue) {
-				return removeQuotes(headerValue);
+				return headerValue;
 			}
 		}
 
 		if (req.has('p-asserted-identity')) {
-			const pAssertedIdentity = req.getParsedHeader('p-asserted-identity');
-			if (pAssertedIdentity?.name) {
-				return removeQuotes(pAssertedIdentity.name);
+			const pAssertedIdentity = removeQuotes(req.getParsedHeader('p-asserted-identity')?.name);
+			if (pAssertedIdentity) {
+				return pAssertedIdentity;
 			}
 		}
 
 		if (req.has('from')) {
-			const fromHeader = req.getParsedHeader('from');
-			if (fromHeader?.name) {
-				return removeQuotes(fromHeader.name);
+			const fromHeader = removeQuotes(req.getParsedHeader('from')?.name);
+			if (fromHeader) {
+				return fromHeader;
 			}
 		}
 
@@ -471,20 +471,15 @@ export class IncomingSipCall extends BaseSipCall {
 
 		const displayName = this.getDisplayNameFromInvite(req);
 		const usernameFromHeader = req.has('X-RocketChat-Caller-Username') && req.get('X-RocketChat-Caller-Username');
-		const username = usernameFromHeader || req.callingNumber;
 		const sipExtension = req.callingNumber;
 
 		const defaultContactInfo: MediaCallContactInformation = {
-			username,
 			sipExtension,
 			displayName: displayName || sipExtension,
+			...(usernameFromHeader && { username: usernameFromHeader }),
 		};
 
-		const contact = await mediaCallDirector.cast.getContactForExtensionNumber(
-			sipExtension,
-			{ requiredType: 'sip', allowIdentityLookup: true },
-			defaultContactInfo,
-		);
+		const contact = await mediaCallDirector.cast.getContactForExtensionNumber(sipExtension, { requiredType: 'sip' }, defaultContactInfo);
 
 		if (contact) {
 			return {
